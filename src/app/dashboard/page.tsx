@@ -1,4 +1,5 @@
-import EC2Table from '@/components/EC2Table';
+import Image from "next/image";
+import EC2Table from "@/components/EC2Table";
 
 export default function DashboardPage() {
   return (
@@ -9,15 +10,16 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center space-x-4">
               {/* Tracer Logo */}
-              <div className="flex items-center space-x-3">
-                <img 
-                  src="/tracer-logo-only-white.svg" 
-                  alt="Tracer" 
-                  className="h-7 w-auto"
-                />
-                <div className="h-6 w-px bg-tracer-border"></div>
-              </div>
-              
+              <Image
+                src="/tracer-logo-only-white.svg"
+                alt="Tracer"
+                width={28}
+                height={28}
+                className="h-7 w-auto"
+              />
+              <div className="h-6 w-px bg-tracer-border"></div>
+            </div>
+            <div>
               <div className="flex items-center space-x-3">
                 <h1 className="text-2xl font-bold text-tracer-text-primary">
                   EC2 Observability Dashboard
@@ -27,24 +29,24 @@ export default function DashboardPage() {
                 </span>
               </div>
             </div>
-            
+
             <nav className="flex items-center">
-              <a 
-                href="#instances" 
+              <a
+                href="#instances"
                 className="text-tracer-info font-medium text-sm hover:text-tracer-text-primary transition-colors px-3"
               >
                 Instances
               </a>
               <div className="w-px h-4 bg-tracer-border"></div>
-              <a 
-                href="#costs" 
+              <a
+                href="#costs"
                 className="text-tracer-text-secondary text-sm hover:text-tracer-text-primary transition-colors px-3"
               >
                 Cost Overview
               </a>
               <div className="w-px h-4 bg-tracer-border"></div>
-              <a 
-                href="#attribution" 
+              <a
+                href="#attribution"
                 className="text-tracer-text-secondary text-sm hover:text-tracer-text-primary transition-colors px-3"
               >
                 Cost Attribution
@@ -64,14 +66,31 @@ export default function DashboardPage() {
                 Infrastructure Overview
               </h2>
               <p className="mt-2 text-sm text-tracer-text-secondary max-w-2xl">
-                Monitor your EC2 instances for cost optimization opportunities. 
-                Identify underutilized resources and potential savings across your cloud infrastructure.
+                Monitor your EC2 instances for cost optimization opportunities.
+                Identify underutilized resources and potential savings across
+                your cloud infrastructure.
               </p>
             </div>
             <div className="mt-4 sm:mt-0">
-              <button className="inline-flex items-center px-4 py-2 border border-tracer-border rounded-md text-sm font-medium text-tracer-text-secondary bg-tracer-bg-secondary hover:bg-tracer-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tracer-focus transition-colors">
-                <svg className="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              <button
+                type="button"
+                className="inline-flex items-center px-4 py-2 border border-tracer-border rounded-md text-sm font-medium text-tracer-text-secondary bg-tracer-bg-secondary hover:bg-tracer-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tracer-focus transition-colors"
+              >
+                <svg
+                  className="mr-2 h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  role="img"
+                >
+                  <title>Export Icon</title>
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                  />
                 </svg>
                 Export Report
               </button>
@@ -83,59 +102,110 @@ export default function DashboardPage() {
         <div className="relative mb-8">
           {/* Grid Background Pattern */}
           <div className="absolute inset-0 opacity-30">
-            <div className="h-full w-full" style={{
-              backgroundImage: `radial-gradient(circle at 1px 1px, rgba(${parseInt('303030'.slice(0,2), 16)}, ${parseInt('303030'.slice(2,4), 16)}, ${parseInt('303030'.slice(4,6), 16)}, 0.3) 1px, transparent 0)`,
-              backgroundSize: '24px 24px'
-            }}></div>
+            <div
+              className="h-full w-full"
+              style={{
+                backgroundImage: `radial-gradient(circle at 1px 1px, rgba(${parseInt("303030".slice(0, 2), 16)}, ${parseInt("303030".slice(2, 4), 16)}, ${parseInt("303030".slice(4, 6), 16)}, 0.3) 1px, transparent 0)`,
+                backgroundSize: "24px 24px",
+              }}
+            ></div>
           </div>
           <div className="relative grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-tracer-bg-secondary rounded-lg border border-tracer-border p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-tracer-info/20 rounded-md flex items-center justify-center border border-tracer-info/30">
-                  <svg className="w-5 h-5 text-tracer-info" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2" />
-                  </svg>
+            <div className="bg-tracer-bg-secondary rounded-lg border border-tracer-border p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-tracer-info/20 rounded-md flex items-center justify-center border border-tracer-info/30">
+                    <svg
+                      className="w-5 h-5 text-tracer-info"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                      role="img"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-tracer-text-secondary">
+                    Active Instances
+                  </p>
+                  <p className="text-2xl font-semibold text-tracer-text-primary">
+                    --
+                  </p>
                 </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-tracer-text-secondary">Active Instances</p>
-                <p className="text-2xl font-semibold text-tracer-text-primary">--</p>
-              </div>
             </div>
-          </div>
 
-          <div className="bg-tracer-bg-secondary rounded-lg border border-tracer-border p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-tracer-warning/20 rounded-md flex items-center justify-center border border-tracer-warning/30">
-                  <svg className="w-5 h-5 text-tracer-warning" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                  </svg>
+            <div className="bg-tracer-bg-secondary rounded-lg border border-tracer-border p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-tracer-warning/20 rounded-md flex items-center justify-center border border-tracer-warning/30">
+                    <svg
+                      className="w-5 h-5 text-tracer-warning"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                      role="img"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-tracer-text-secondary">
+                    Underutilized
+                  </p>
+                  <p className="text-2xl font-semibold text-tracer-text-primary">
+                    --
+                  </p>
                 </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-tracer-text-secondary">Underutilized</p>
-                <p className="text-2xl font-semibold text-tracer-text-primary">--</p>
-              </div>
             </div>
-          </div>
 
-          <div className="bg-tracer-bg-secondary rounded-lg border border-tracer-border p-6">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <div className="w-8 h-8 bg-tracer-success/20 rounded-md flex items-center justify-center border border-tracer-success/30">
-                  <svg className="w-5 h-5 text-tracer-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
-                  </svg>
+            <div className="bg-tracer-bg-secondary rounded-lg border border-tracer-border p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 bg-tracer-success/20 rounded-md flex items-center justify-center border border-tracer-success/30">
+                    <svg
+                      className="w-5 h-5 text-tracer-success"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                      role="img"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-tracer-text-secondary">
+                    Potential Savings
+                  </p>
+                  <p className="text-2xl font-semibold text-tracer-text-primary">
+                    --
+                  </p>
                 </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-tracer-text-secondary">Potential Savings</p>
-                <p className="text-2xl font-semibold text-tracer-text-primary">--</p>
-              </div>
             </div>
-          </div>
           </div>
         </div>
 
@@ -160,22 +230,31 @@ export default function DashboardPage() {
         <section id="costs" className="mb-12">
           <div className="bg-tracer-bg-secondary rounded-lg border border-tracer-border p-8 text-center">
             <div className="text-tracer-text-muted text-4xl mb-4">📊</div>
-            <h3 className="text-lg font-semibold text-tracer-text-primary mb-2">Cost Overview</h3>
+            <h3 className="text-lg font-semibold text-tracer-text-primary mb-2">
+              Cost Overview
+            </h3>
             <p className="text-tracer-text-secondary">
               Cost trend analysis and budget tracking will be displayed here.
             </p>
-            <div className="mt-4 text-sm text-tracer-text-muted">Coming soon...</div>
+            <div className="mt-4 text-sm text-tracer-text-muted">
+              Coming soon...
+            </div>
           </div>
         </section>
 
         <section id="attribution" className="mb-12">
           <div className="bg-tracer-bg-secondary rounded-lg border border-tracer-border p-8 text-center">
             <div className="text-tracer-text-muted text-4xl mb-4">🏷️</div>
-            <h3 className="text-lg font-semibold text-tracer-text-primary mb-2">Cost Attribution</h3>
+            <h3 className="text-lg font-semibold text-tracer-text-primary mb-2">
+              Cost Attribution
+            </h3>
             <p className="text-tracer-text-secondary">
-              Cost breakdowns by team, environment, and resource tags will be shown here.
+              Cost breakdowns by team, environment, and resource tags will be
+              shown here.
             </p>
-            <div className="mt-4 text-sm text-tracer-text-muted">Coming soon...</div>
+            <div className="mt-4 text-sm text-tracer-text-muted">
+              Coming soon...
+            </div>
           </div>
         </section>
       </main>
@@ -188,10 +267,16 @@ export default function DashboardPage() {
               © 2024 Tracer EC2 Observability Dashboard
             </div>
             <div className="flex items-center space-x-6 text-sm text-tracer-text-muted">
-              <a href="#" className="hover:text-tracer-text-secondary transition-colors">
+              <a
+                href="#"
+                className="hover:text-tracer-text-secondary transition-colors"
+              >
                 Documentation
               </a>
-              <a href="#" className="hover:text-tracer-text-secondary transition-colors">
+              <a
+                href="#"
+                className="hover:text-tracer-text-secondary transition-colors"
+              >
                 Support
               </a>
               <span className="text-xs bg-tracer-bg-tertiary text-tracer-text-secondary px-2 py-1 rounded border border-tracer-border">
