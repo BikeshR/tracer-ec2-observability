@@ -83,25 +83,25 @@ export default function EC2Table() {
     switch (wasteLevel) {
       case 'high':
         return {
-          bgClass: 'bg-red-50',
-          textClass: 'text-red-700',
-          badgeClass: 'bg-red-100 text-red-800',
+          bgClass: 'bg-tracer-danger/10',
+          textClass: 'text-tracer-danger',
+          badgeClass: 'bg-tracer-danger/10 text-tracer-danger border border-tracer-danger/20',
           icon: '🔴',
           label: 'High Waste'
         };
       case 'medium':
         return {
-          bgClass: 'bg-yellow-50',
-          textClass: 'text-yellow-700',
-          badgeClass: 'bg-yellow-100 text-yellow-800',
+          bgClass: 'bg-tracer-warning/10',
+          textClass: 'text-tracer-warning',
+          badgeClass: 'bg-tracer-warning/10 text-tracer-warning border border-tracer-warning/20',
           icon: '🟡',
           label: 'Medium Waste'
         };
       case 'low':
         return {
-          bgClass: 'bg-green-50',
-          textClass: 'text-green-700',
-          badgeClass: 'bg-green-100 text-green-800',
+          bgClass: 'bg-tracer-success/10',
+          textClass: 'text-tracer-success',
+          badgeClass: 'bg-tracer-success/10 text-tracer-success border border-tracer-success/20',
           icon: '🟢',
           label: 'Efficient'
         };
@@ -110,43 +110,43 @@ export default function EC2Table() {
 
   // Get utilization styling
   const getUtilizationStyling = (utilization: number) => {
-    if (utilization < 20) return 'text-red-600 font-semibold';
-    if (utilization < 60) return 'text-yellow-600 font-medium';
-    return 'text-green-600 font-semibold';
+    if (utilization < 20) return 'text-tracer-danger font-semibold';
+    if (utilization < 60) return 'text-tracer-warning font-medium';
+    return 'text-tracer-success font-semibold';
   };
 
   // Get state styling
   const getStateStyling = (state: string) => {
     switch (state.toLowerCase()) {
       case 'running':
-        return 'bg-green-100 text-green-800';
+        return 'bg-tracer-success/10 text-tracer-success border border-tracer-success/20';
       case 'stopped':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-tracer-bg-tertiary text-tracer-text-secondary border border-tracer-border';
       case 'pending':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-tracer-info/10 text-tracer-info border border-tracer-info/20';
       case 'shutting-down':
       case 'stopping':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-tracer-warning/10 text-tracer-warning border border-tracer-warning/20';
       case 'terminated':
-        return 'bg-red-100 text-red-800';
+        return 'bg-tracer-danger/10 text-tracer-danger border border-tracer-danger/20';
       default:
-        return 'bg-gray-100 text-gray-600';
+        return 'bg-tracer-bg-tertiary text-tracer-text-muted border border-tracer-border';
     }
   };
 
   // Loading state
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border p-8">
+      <div className="bg-tracer-bg-secondary rounded-lg border border-tracer-border p-8">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-gray-200 rounded w-64"></div>
+          <div className="h-8 bg-tracer-bg-tertiary rounded w-64"></div>
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-12 bg-gray-100 rounded"></div>
+              <div key={i} className="h-12 bg-tracer-bg-primary rounded"></div>
             ))}
           </div>
         </div>
-        <p className="text-center text-gray-500 mt-4">Loading EC2 instances...</p>
+        <p className="text-center text-tracer-text-secondary mt-4">Loading EC2 instances...</p>
       </div>
     );
   }
@@ -154,14 +154,14 @@ export default function EC2Table() {
   // Error state
   if (error) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border p-8">
+      <div className="bg-tracer-bg-secondary rounded-lg border border-tracer-border p-8">
         <div className="text-center">
-          <div className="text-red-600 text-6xl mb-4">⚠️</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">Failed to Load EC2 Data</h3>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <div className="text-tracer-danger text-6xl mb-4">⚠️</div>
+          <h3 className="text-lg font-semibold text-tracer-text-primary mb-2">Failed to Load EC2 Data</h3>
+          <p className="text-tracer-text-secondary mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+            className="bg-tracer-info text-white px-4 py-2 rounded-md hover:bg-tracer-active transition-colors"
           >
             Retry
           </button>
@@ -173,11 +173,11 @@ export default function EC2Table() {
   // No data state
   if (!data || !data.instances || data.instances.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border p-8">
+      <div className="bg-tracer-bg-secondary rounded-lg border border-tracer-border p-8">
         <div className="text-center">
-          <div className="text-gray-400 text-6xl mb-4">📊</div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No EC2 Instances Found</h3>
-          <p className="text-gray-600">
+          <div className="text-tracer-text-muted text-6xl mb-4">📊</div>
+          <h3 className="text-lg font-semibold text-tracer-text-primary mb-2">No EC2 Instances Found</h3>
+          <p className="text-tracer-text-secondary">
             {data?.source === 'aws' 
               ? 'No EC2 instances found in your AWS account.' 
               : 'No instance data available.'}
@@ -188,20 +188,20 @@ export default function EC2Table() {
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border">
+    <div className="bg-tracer-bg-secondary rounded-lg border border-tracer-border">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200">
+      <div className="px-6 py-4 border-b border-tracer-border">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">EC2 Instance Utilization</h2>
-            <p className="text-sm text-gray-600 mt-1">
+            <h2 className="text-xl font-semibold text-tracer-text-primary">EC2 Instance Utilization</h2>
+            <p className="text-sm text-tracer-text-secondary mt-1">
               {data.instances.length} instance{data.instances.length !== 1 ? 's' : ''} found
-              <span className="ml-2 px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-700">
+              <span className="ml-2 px-2 py-1 text-xs rounded-full bg-tracer-bg-tertiary text-tracer-text-secondary border border-tracer-border">
                 {data.source === 'aws' ? '🔗 Live AWS Data' : '🔧 Mock Data'}
               </span>
             </p>
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-sm text-tracer-text-muted">
             Last updated: {new Date(data.timestamp).toLocaleTimeString()}
           </div>
         </div>
@@ -210,12 +210,12 @@ export default function EC2Table() {
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-gray-50">
+          <thead className="bg-tracer-bg-tertiary">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-tracer-text-muted uppercase tracking-wider">
                 <button 
                   onClick={() => handleSort('name')}
-                  className="flex items-center space-x-1 hover:text-gray-700"
+                  className="flex items-center space-x-1 hover:text-tracer-text-secondary transition-colors"
                 >
                   <span>Instance</span>
                   {sortField === 'name' && (
@@ -223,10 +223,10 @@ export default function EC2Table() {
                   )}
                 </button>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-tracer-text-muted uppercase tracking-wider">
                 <button 
                   onClick={() => handleSort('cpuUtilization')}
-                  className="flex items-center space-x-1 hover:text-gray-700"
+                  className="flex items-center space-x-1 hover:text-tracer-text-secondary transition-colors"
                 >
                   <span>CPU Usage</span>
                   {sortField === 'cpuUtilization' && (
@@ -234,13 +234,13 @@ export default function EC2Table() {
                   )}
                 </button>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-tracer-text-muted uppercase tracking-wider">
                 Memory %
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-tracer-text-muted uppercase tracking-wider">
                 <button 
                   onClick={() => handleSort('costPerHour')}
-                  className="flex items-center space-x-1 hover:text-gray-700"
+                  className="flex items-center space-x-1 hover:text-tracer-text-secondary transition-colors"
                 >
                   <span>Cost/Hour</span>
                   {sortField === 'costPerHour' && (
@@ -248,13 +248,13 @@ export default function EC2Table() {
                   )}
                 </button>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-tracer-text-muted uppercase tracking-wider">
                 State
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-tracer-text-muted uppercase tracking-wider">
                 <button 
                   onClick={() => handleSort('efficiencyScore')}
-                  className="flex items-center space-x-1 hover:text-gray-700"
+                  className="flex items-center space-x-1 hover:text-tracer-text-secondary transition-colors"
                 >
                   <span>Efficiency</span>
                   {sortField === 'efficiencyScore' && (
@@ -262,10 +262,10 @@ export default function EC2Table() {
                   )}
                 </button>
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-tracer-text-muted uppercase tracking-wider">
                 <button 
                   onClick={() => handleSort('wasteLevel')}
-                  className="flex items-center space-x-1 hover:text-gray-700"
+                  className="flex items-center space-x-1 hover:text-tracer-text-secondary transition-colors"
                 >
                   <span>Waste Alert</span>
                   {sortField === 'wasteLevel' && (
@@ -275,23 +275,23 @@ export default function EC2Table() {
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-tracer-border">
             {sortedInstances.map((instance) => {
               const wasteStyling = getWasteLevelStyling(instance.wasteLevel, instance.efficiencyScore);
               
               return (
                 <tr 
                   key={instance.instanceId} 
-                  className={`hover:bg-gray-50 ${wasteStyling.bgClass}`}
+                  className={`hover:bg-tracer-hover ${wasteStyling.bgClass}`}
                 >
                   {/* Instance Info */}
                   <td className="px-6 py-4">
                     <div className="flex flex-col">
-                      <div className="font-medium text-gray-900">{instance.name}</div>
-                      <div className="text-sm text-gray-500">
+                      <div className="font-medium text-tracer-text-primary">{instance.name}</div>
+                      <div className="text-sm text-tracer-text-secondary">
                         {instance.instanceType} • {instance.instanceId}
                       </div>
-                      <div className="text-xs text-gray-400">
+                      <div className="text-xs text-tracer-text-muted">
                         {instance.region}
                       </div>
                     </div>
@@ -313,10 +313,10 @@ export default function EC2Table() {
 
                   {/* Cost */}
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900 font-medium">
+                    <div className="text-sm text-tracer-text-primary font-medium">
                       ${instance.costPerHour.toFixed(4)}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-tracer-text-secondary">
                       ${instance.monthlyCost.toFixed(2)}/month
                     </div>
                   </td>
@@ -346,7 +346,7 @@ export default function EC2Table() {
                           {wasteStyling.label}
                         </div>
                         {instance.wasteLevel === 'high' && (
-                          <div className="text-xs text-red-600 mt-1">
+                          <div className="text-xs text-tracer-danger mt-1">
                             💰 Potential savings available
                           </div>
                         )}
@@ -361,7 +361,7 @@ export default function EC2Table() {
       </div>
 
       {/* Footer */}
-      <div className="px-6 py-3 bg-gray-50 border-t text-xs text-gray-500">
+      <div className="px-6 py-3 bg-tracer-bg-tertiary border-t border-tracer-border text-xs text-tracer-text-muted">
         <div className="flex justify-between items-center">
           <div>
             Showing {sortedInstances.length} of {data.instances.length} instances
