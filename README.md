@@ -81,6 +81,14 @@ Visit [http://localhost:3000/dashboard](http://localhost:3000/dashboard) to see 
        {
          "Effect": "Allow",
          "Action": [
+           "cloudwatch:GetMetricStatistics",
+           "cloudwatch:ListMetrics"
+         ],
+         "Resource": "*"
+       },
+       {
+         "Effect": "Allow",
+         "Action": [
            "ce:GetCostAndUsage",
            "ce:GetDimensionValues",
            "ce:GetUsageReport"
@@ -155,7 +163,7 @@ npm run format       # Format code with Biome
 ## 🛠 Technical Stack
 
 - **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS
-- **AWS Integration**: AWS SDK v3 (EC2 + Cost Explorer)
+- **AWS Integration**: AWS SDK v3 (EC2 + CloudWatch + Cost Explorer)
 - **Build Tool**: Turbopack (Next.js native)
 - **Code Quality**: Biome (linting + formatting)
 - **Design System**: Semantic color tokens with dark theme
