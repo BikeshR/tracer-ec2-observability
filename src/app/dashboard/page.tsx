@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import Image from "next/image";
 import CostAttributionPanel from "@/components/CostAttributionPanel";
@@ -145,11 +145,13 @@ export default function DashboardPage() {
                   </p>
                   <p className="text-2xl font-semibold text-tracer-text-primary">
                     {loading ? (
-                      <span className="text-tracer-text-muted animate-pulse">...</span>
+                      <span className="text-tracer-text-muted animate-pulse">
+                        ...
+                      </span>
                     ) : error ? (
                       <span className="text-tracer-error text-sm">Error</span>
                     ) : (
-                      metrics?.activeInstances ?? "--"
+                      (metrics?.activeInstances ?? "--")
                     )}
                   </p>
                 </div>
@@ -183,11 +185,13 @@ export default function DashboardPage() {
                   </p>
                   <p className="text-2xl font-semibold text-tracer-text-primary">
                     {loading ? (
-                      <span className="text-tracer-text-muted animate-pulse">...</span>
+                      <span className="text-tracer-text-muted animate-pulse">
+                        ...
+                      </span>
                     ) : error ? (
                       <span className="text-tracer-error text-sm">Error</span>
                     ) : (
-                      metrics?.underutilizedInstances ?? "--"
+                      (metrics?.underutilizedInstances ?? "--")
                     )}
                   </p>
                 </div>
@@ -221,11 +225,13 @@ export default function DashboardPage() {
                   </p>
                   <p className="text-2xl font-semibold text-tracer-text-primary">
                     {loading ? (
-                      <span className="text-tracer-text-muted animate-pulse">...</span>
+                      <span className="text-tracer-text-muted animate-pulse">
+                        ...
+                      </span>
                     ) : error ? (
                       <span className="text-tracer-error text-sm">Error</span>
                     ) : (
-                      metrics?.potentialSavings ?? "--"
+                      (metrics?.potentialSavings ?? "--")
                     )}
                   </p>
                 </div>

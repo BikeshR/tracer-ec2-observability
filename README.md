@@ -17,6 +17,13 @@ A production-ready **AWS EC2 cost optimization dashboard** built with Next.js 15
 - **Instance State Tracking**: Live status monitoring with visual indicators
 - **Responsive Design**: Optimized for desktop and mobile workflows
 
+### 🏷️ **Cost Attribution Analysis**
+- **Research Team Focus**: Break down costs by teams, projects, and scientific workflows
+- **Toggleable Views**: Switch between detailed table and visual chart representations
+- **Attribution Tracking**: Distinguish between attributed, unattributed, and total costs
+- **Interactive Dimensions**: Group by team, project, environment, instance type, or region
+- **Tagging Integration**: AWS Resource Groups Tagging API for real-time cost mapping
+
 ### 🔗 **Smart AWS Integration**
 - **Environment-Aware**: Automatically uses mock data in development, AWS in production
 - **Graceful Fallbacks**: Never breaks - falls back to mock data if AWS is unavailable
@@ -79,6 +86,16 @@ Visit [http://localhost:3000/dashboard](http://localhost:3000/dashboard) to see 
            "ce:GetUsageReport"
          ],
          "Resource": "*"
+       },
+       {
+         "Effect": "Allow",
+         "Action": [
+           "resource-groups:GetResources",
+           "tag:GetResources",
+           "tag:GetTagKeys",
+           "tag:GetTagValues"
+         ],
+         "Resource": "*"
        }
      ]
    }
@@ -92,7 +109,10 @@ Visit [http://localhost:3000/dashboard](http://localhost:3000/dashboard) to see 
    # Test Cost Explorer integration  
    curl -X POST http://localhost:3000/api/costs
    
-   # Both should return: {"source": "aws", "status": "connected"}
+   # Test Cost Attribution integration
+   curl -X POST http://localhost:3000/api/attribution
+   
+   # All should return: {"source": "aws", "status": "connected"}
    ```
 
 ## 📁 Project Structure
@@ -102,12 +122,14 @@ Visit [http://localhost:3000/dashboard](http://localhost:3000/dashboard) to see 
 │   ├── app/
 │   │   ├── api/
 │   │   │   ├── instances/          # EC2 integration API
-│   │   │   └── costs/              # Cost Explorer integration API
+│   │   │   ├── costs/              # Cost Explorer integration API
+│   │   │   └── attribution/        # Resource Groups Tagging API
 │   │   ├── dashboard/              # Main dashboard page  
 │   │   └── layout.tsx              # Root layout with Tracer branding
 │   ├── components/
 │   │   ├── EC2Table.tsx           # EC2 instance table with waste detection
-│   │   └── CostOverview.tsx       # Cost analytics dashboard
+│   │   ├── CostOverview.tsx       # Cost analytics dashboard
+│   │   └── CostAttributionPanel.tsx # Cost attribution by teams/projects
 │   └── lib/
 │       ├── mock-data.ts           # Realistic sample data
 │       └── colors.ts              # Tracer design system

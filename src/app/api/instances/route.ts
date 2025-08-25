@@ -16,13 +16,31 @@ const ec2Client = new EC2Client({
   },
 });
 
+// AWS EC2 instance type definitions
+interface AWSTag {
+  Key?: string;
+  Value?: string;
+}
+
+interface AWSInstanceState {
+  Name?: string;
+}
+
+interface AWSInstance {
+  InstanceId?: string;
+  InstanceType?: string;
+  State?: AWSInstanceState;
+  LaunchTime?: Date;
+  Tags?: AWSTag[];
+}
+
 // Transform AWS EC2 response to our standardized format
-function transformAWSInstance(instance: any): EC2Instance {
+function transformAWSInstance(instance: AWSInstance): EC2Instance {
   const name =
-    instance.Tags?.find((tag: any) => tag.Key === "Name")?.Value ||
+    instance.Tags?.find((tag: AWSTag) => tag.Key === "Name")?.Value ||
     "Unnamed Instance";
   const tags = Object.fromEntries(
-    instance.Tags?.map((tag: any) => [tag.Key, tag.Value]) || [],
+    instance.Tags?.map((tag: AWSTag) => [tag.Key, tag.Value]) || [],
   );
 
   // Mock metrics for now - will replace with real CloudWatch data later
@@ -35,9 +53,9 @@ function transformAWSInstance(instance: any): EC2Instance {
   );
 
   return {
-    instanceId: instance.InstanceId,
+    instanceId: instance.InstanceId || "unknown",
     name,
-    instanceType: instance.InstanceType,
+    instanceType: instance.InstanceType || "unknown",
     state: instance.State?.Name || "unknown",
     launchTime: instance.LaunchTime?.toISOString() || "",
     region: process.env.AWS_REGION || "us-east-1",

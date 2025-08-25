@@ -56,8 +56,8 @@ export default function EC2Table() {
   // Sort instances
   const sortedInstances = data?.instances
     ? [...data.instances].sort((a, b) => {
-        let aValue: any = a[sortField];
-        let bValue: any = b[sortField];
+        let aValue: string | number = a[sortField];
+        let bValue: string | number = b[sortField];
 
         // Handle waste level sorting
         if (sortField === "wasteLevel") {
@@ -69,7 +69,7 @@ export default function EC2Table() {
         // Handle string vs number comparison
         if (typeof aValue === "string") {
           aValue = aValue.toLowerCase();
-          bValue = bValue.toLowerCase();
+          bValue = (bValue as string).toLowerCase();
         }
 
         if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;

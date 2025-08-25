@@ -80,7 +80,7 @@ async function fetchAWSAttributionData(): Promise<AttributionData> {
 
     for (const resource of resources.ResourceTagMappingList || []) {
       // Extract instance details from ARN
-      const instanceId = resource.ResourceARN?.split("/").pop();
+      const _instanceId = resource.ResourceARN?.split("/").pop();
       const region = resource.ResourceARN?.split(":")[3] || "unknown";
 
       // Calculate estimated cost per instance (simplified for demo)
@@ -267,7 +267,7 @@ export async function POST() {
       try {
         const testCommand = new GetResourcesCommand({
           ResourceTypeFilters: ["ec2:instance"],
-          MaxItems: 1,
+          ResourcesPerPage: 1,
         });
 
         const result = await taggingClient.send(testCommand);
