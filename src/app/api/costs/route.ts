@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
 import {
   CostExplorerClient,
   GetCostAndUsageCommand,
   GetDimensionValuesCommand,
 } from "@aws-sdk/client-cost-explorer";
-import { mockCostData, type CostData } from "@/lib/mock-data";
+import { NextResponse } from "next/server";
+import { type CostData, mockCostData } from "@/lib/mock-data";
 
 // Environment-aware data source switching
 const useMockData =
@@ -191,15 +191,17 @@ export async function POST() {
     if (!useMockData && costExplorerClient) {
       try {
         const dateRange = getDateRange();
-        console.log(`[Cost API] Testing date range: ${dateRange.Start} to ${dateRange.End}`);
-        
+        console.log(
+          `[Cost API] Testing date range: ${dateRange.Start} to ${dateRange.End}`,
+        );
+
         const testCommand = new GetDimensionValuesCommand({
           TimePeriod: dateRange,
           Dimension: "SERVICE",
         });
 
         const result = await costExplorerClient.send(testCommand);
-        
+
         return NextResponse.json({
           status: "connected",
           source: "aws",
@@ -215,7 +217,8 @@ export async function POST() {
           source: "mock-fallback",
           message: `AWS Cost Explorer connection failed: ${error instanceof Error ? error.message : "Unknown error"}`,
           dateRange,
-          troubleshooting: "This usually means: 1) Cost Explorer not enabled in AWS Console, 2) No billing data for this time period, or 3) Account too new",
+          troubleshooting:
+            "This usually means: 1) Cost Explorer not enabled in AWS Console, 2) No billing data for this time period, or 3) Account too new",
           ...healthCheck,
         });
       }

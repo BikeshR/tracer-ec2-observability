@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { mockCostData, type CostData } from "@/lib/mock-data";
+import { useEffect, useState } from "react";
+import { type CostData, mockCostData } from "@/lib/mock-data";
 
 interface ApiResponse {
   costs: CostData;
@@ -291,8 +291,11 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
               Cost by Environment
             </h3>
             <div className="space-y-3">
-              {costData.costByEnvironment.map((item, index) => (
-                <div key={index} className="flex items-center justify-between">
+              {costData.costByEnvironment.map((item) => (
+                <div
+                  key={item.environment}
+                  className="flex items-center justify-between"
+                >
                   <div className="flex items-center space-x-3">
                     <div
                       className={`w-3 h-3 rounded-full ${
@@ -322,9 +325,9 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
             </h3>
             {costData.anomalies.length > 0 ? (
               <div className="space-y-3">
-                {costData.anomalies.map((anomaly, index) => (
+                {costData.anomalies.map((anomaly) => (
                   <div
-                    key={index}
+                    key={anomaly.date}
                     className="flex items-center justify-between p-3 bg-tracer-danger/10 rounded-lg border border-tracer-danger/20"
                   >
                     <div className="flex items-center space-x-3">

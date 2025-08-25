@@ -163,7 +163,7 @@ export const mockCostData: CostData = {
 export function calculateEfficiencyScore(
   cpuUtilization: number,
   memoryUtilization: number,
-  costPerHour: number,
+  _costPerHour: number,
 ): number {
   // Simple algorithm: average utilization weighted by cost efficiency
   const avgUtilization = (cpuUtilization + memoryUtilization) / 2;

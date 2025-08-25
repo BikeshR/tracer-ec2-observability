@@ -1,11 +1,11 @@
 import { DescribeInstancesCommand, EC2Client } from "@aws-sdk/client-ec2";
+import { NextResponse } from "next/server";
 import {
   calculateEfficiencyScore,
   determineWasteLevel,
   type EC2Instance,
   mockEC2Instances,
 } from "@/lib/mock-data";
-import { NextResponse } from "next/server";
 
 // EC2 client setup (only used in production)
 const ec2Client = new EC2Client({

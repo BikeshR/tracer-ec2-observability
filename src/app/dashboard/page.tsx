@@ -269,18 +269,20 @@ export default function DashboardPage() {
               © 2024 Tracer EC2 Observability Dashboard
             </div>
             <div className="flex items-center space-x-6 text-sm text-tracer-text-muted">
-              <a
-                href="#"
-                className="hover:text-tracer-text-secondary transition-colors"
+              <button
+                type="button"
+                className="hover:text-tracer-text-secondary transition-colors cursor-pointer"
+                onClick={() => console.log("Documentation clicked")}
               >
                 Documentation
-              </a>
-              <a
-                href="#"
-                className="hover:text-tracer-text-secondary transition-colors"
+              </button>
+              <button
+                type="button"
+                className="hover:text-tracer-text-secondary transition-colors cursor-pointer"
+                onClick={() => console.log("Support clicked")}
               >
                 Support
-              </a>
+              </button>
               <span className="text-xs bg-tracer-bg-tertiary text-tracer-text-secondary px-2 py-1 rounded border border-tracer-border">
                 Assessment Build
               </span>

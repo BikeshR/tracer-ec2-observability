@@ -91,7 +91,7 @@ export default function EC2Table() {
   // Get waste level styling
   const getWasteLevelStyling = (
     wasteLevel: "low" | "medium" | "high",
-    efficiencyScore: number,
+    _efficiencyScore: number,
   ) => {
     switch (wasteLevel) {
       case "high":
