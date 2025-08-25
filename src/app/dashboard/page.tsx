@@ -1,4 +1,5 @@
 import Image from "next/image";
+import CostOverview from "@/components/CostOverview";
 import EC2Table from "@/components/EC2Table";
 
 export default function DashboardPage() {
@@ -226,20 +227,21 @@ export default function DashboardPage() {
           <EC2Table />
         </section>
 
-        {/* Placeholder for future components */}
+        {/* Cost Overview Component */}
         <section id="costs" className="mb-12">
-          <div className="bg-tracer-bg-secondary rounded-lg border border-tracer-border p-8 text-center">
-            <div className="text-tracer-text-muted text-4xl mb-4">📊</div>
-            <h3 className="text-lg font-semibold text-tracer-text-primary mb-2">
-              Cost Overview
-            </h3>
-            <p className="text-tracer-text-secondary">
-              Cost trend analysis and budget tracking will be displayed here.
-            </p>
-            <div className="mt-4 text-sm text-tracer-text-muted">
-              Coming soon...
+          {/* Technical Section Divider */}
+          <div className="flex items-center mb-6">
+            <div className="flex-1 h-px bg-tracer-border"></div>
+            <div className="flex items-center px-4">
+              <div className="w-2 h-2 bg-tracer-warning rounded-full mr-2"></div>
+              <span className="text-sm font-mono text-tracer-text-muted uppercase tracking-wider">
+                Cost Analytics
+              </span>
+              <div className="w-2 h-2 bg-tracer-warning rounded-full ml-2"></div>
             </div>
+            <div className="flex-1 h-px bg-tracer-border"></div>
           </div>
+          <CostOverview />
         </section>
 
         <section id="attribution" className="mb-12">
