@@ -67,41 +67,15 @@ export default function DashboardPage() {
       <main className="max-w-tracer mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Title & Description */}
         <div className="mb-8">
-          <div className="sm:flex sm:items-center sm:justify-between">
-            <div>
-              <h2 className="text-3xl font-bold leading-tight text-tracer-text-primary">
-                Infrastructure Overview
-              </h2>
-              <p className="mt-2 text-sm text-tracer-text-secondary max-w-2xl">
-                Monitor your EC2 instances for cost optimization opportunities.
-                Identify underutilized resources and potential savings across
-                your cloud infrastructure.
-              </p>
-            </div>
-            <div className="mt-4 sm:mt-0">
-              <button
-                type="button"
-                className="inline-flex items-center px-4 py-2 border border-tracer-border rounded-md text-sm font-medium text-tracer-text-secondary bg-tracer-bg-secondary hover:bg-tracer-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-tracer-focus transition-colors"
-              >
-                <svg
-                  className="mr-2 h-4 w-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  role="img"
-                >
-                  <title>Export Icon</title>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                  />
-                </svg>
-                Export Report
-              </button>
-            </div>
+          <div>
+            <h2 className="text-3xl font-bold leading-tight text-tracer-text-primary">
+              Infrastructure Overview
+            </h2>
+            <p className="mt-2 text-sm text-tracer-text-secondary max-w-2xl">
+              Monitor your EC2 instances for cost optimization opportunities.
+              Identify underutilized resources and potential savings across your
+              cloud infrastructure.
+            </p>
           </div>
         </div>
 

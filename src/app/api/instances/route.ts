@@ -1,9 +1,9 @@
-import { DescribeInstancesCommand, EC2Client } from "@aws-sdk/client-ec2";
 import {
   CloudWatchClient,
   GetMetricStatisticsCommand,
   type GetMetricStatisticsCommandInput,
 } from "@aws-sdk/client-cloudwatch";
+import { DescribeInstancesCommand, EC2Client } from "@aws-sdk/client-ec2";
 import { NextResponse } from "next/server";
 import {
   calculateEfficiencyScore,
@@ -74,9 +74,11 @@ async function getCloudWatchMetrics(instanceId: string): Promise<{
 
     // Calculate average CPU over the period
     const cpuDatapoints = cpuResult.Datapoints || [];
-    const avgCpu = cpuDatapoints.length > 0 
-      ? cpuDatapoints.reduce((sum, dp) => sum + (dp.Average || 0), 0) / cpuDatapoints.length
-      : Math.random() * 100; // Fallback to mock if no data
+    const avgCpu =
+      cpuDatapoints.length > 0
+        ? cpuDatapoints.reduce((sum, dp) => sum + (dp.Average || 0), 0) /
+          cpuDatapoints.length
+        : Math.random() * 100; // Fallback to mock if no data
 
     // Get Network In/Out
     const networkInParams: GetMetricStatisticsCommandInput = {
@@ -101,14 +103,22 @@ async function getCloudWatchMetrics(instanceId: string): Promise<{
 
     const networkInData = networkInResult.Datapoints || [];
     const networkOutData = networkOutResult.Datapoints || [];
-    
-    const avgNetworkIn = networkInData.length > 0
-      ? networkInData.reduce((sum, dp) => sum + (dp.Average || 0), 0) / networkInData.length / 1024 / 1024 // Convert to MB
-      : Math.random() * 5;
 
-    const avgNetworkOut = networkOutData.length > 0
-      ? networkOutData.reduce((sum, dp) => sum + (dp.Average || 0), 0) / networkOutData.length / 1024 / 1024 // Convert to MB
-      : Math.random() * 3;
+    const avgNetworkIn =
+      networkInData.length > 0
+        ? networkInData.reduce((sum, dp) => sum + (dp.Average || 0), 0) /
+          networkInData.length /
+          1024 /
+          1024 // Convert to MB
+        : Math.random() * 5;
+
+    const avgNetworkOut =
+      networkOutData.length > 0
+        ? networkOutData.reduce((sum, dp) => sum + (dp.Average || 0), 0) /
+          networkOutData.length /
+          1024 /
+          1024 // Convert to MB
+        : Math.random() * 3;
 
     // Memory utilization requires CloudWatch agent - use estimated value if not available
     // In production, this would come from custom metrics if CloudWatch agent is installed
@@ -133,7 +143,10 @@ async function getCloudWatchMetrics(instanceId: string): Promise<{
 }
 
 // Transform AWS EC2 response to our standardized format (with real CloudWatch metrics)
-async function transformAWSInstance(instance: AWSInstance, useMockData: boolean): Promise<EC2Instance> {
+async function transformAWSInstance(
+  instance: AWSInstance,
+  useMockData: boolean,
+): Promise<EC2Instance> {
   const name =
     instance.Tags?.find((tag: AWSTag) => tag.Key === "Name")?.Value ||
     "Unnamed Instance";
@@ -144,7 +157,13 @@ async function transformAWSInstance(instance: AWSInstance, useMockData: boolean)
   const instanceId = instance.InstanceId || "unknown";
 
   // Get real CloudWatch metrics (or mock data in development)
-  let metrics;
+  let metrics: {
+    cpuUtilization: number;
+    memoryUtilization: number;
+    networkIn: number;
+    networkOut: number;
+  };
+
   if (useMockData || instanceId === "unknown") {
     // Use mock data in development or if instance ID unavailable
     metrics = {
