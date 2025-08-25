@@ -188,3 +188,146 @@ export function determineWasteLevel(
   if (efficiencyScore >= 40) return "medium";
   return "high";
 }
+
+// Cost Attribution Data Types
+export interface AttributionBreakdown {
+  category: string;
+  cost: number;
+  percentage: number;
+  instanceCount: number;
+}
+
+export interface AttributionData {
+  totalCost: number;
+  attributedCost: number;
+  unaccountedCost: number;
+  attributionRate: number; // Percentage of costs that are attributed
+  breakdowns: {
+    byTeam: AttributionBreakdown[];
+    byProject: AttributionBreakdown[];
+    byEnvironment: AttributionBreakdown[];
+    byInstanceType: AttributionBreakdown[];
+    byRegion: AttributionBreakdown[];
+  };
+  timeRange: {
+    start: string;
+    end: string;
+  };
+  lastUpdated: string;
+}
+
+// Mock Cost Attribution Data (Research Team Focused)
+export const mockAttributionData: AttributionData = {
+  totalCost: 2847.23,
+  attributedCost: 2564.12,
+  unaccountedCost: 283.11,
+  attributionRate: 90.1,
+  breakdowns: {
+    byTeam: [
+      {
+        category: "Genomics Team",
+        cost: 1245.67,
+        percentage: 48.5,
+        instanceCount: 12,
+      },
+      {
+        category: "Proteomics Team",
+        cost: 892.34,
+        percentage: 34.8,
+        instanceCount: 8,
+      },
+      {
+        category: "Bioinformatics Core",
+        cost: 426.11,
+        percentage: 16.6,
+        instanceCount: 6,
+      },
+    ],
+    byProject: [
+      {
+        category: "Drug Discovery Pipeline",
+        cost: 1456.78,
+        percentage: 56.8,
+        instanceCount: 15,
+      },
+      {
+        category: "Cancer Genomics Study",
+        cost: 687.45,
+        percentage: 26.8,
+        instanceCount: 7,
+      },
+      {
+        category: "Protein Folding Analysis",
+        cost: 419.89,
+        percentage: 16.4,
+        instanceCount: 4,
+      },
+    ],
+    byEnvironment: [
+      {
+        category: "Production",
+        cost: 1538.47,
+        percentage: 60.0,
+        instanceCount: 14,
+      },
+      {
+        category: "Development",
+        cost: 641.23,
+        percentage: 25.0,
+        instanceCount: 8,
+      },
+      { category: "Testing", cost: 384.42, percentage: 15.0, instanceCount: 4 },
+    ],
+    byInstanceType: [
+      {
+        category: "c5.4xlarge",
+        cost: 1025.66,
+        percentage: 40.0,
+        instanceCount: 10,
+      },
+      {
+        category: "m5.2xlarge",
+        cost: 641.03,
+        percentage: 25.0,
+        instanceCount: 8,
+      },
+      {
+        category: "r5.xlarge",
+        cost: 512.82,
+        percentage: 20.0,
+        instanceCount: 6,
+      },
+      {
+        category: "t3.medium",
+        cost: 384.61,
+        percentage: 15.0,
+        instanceCount: 2,
+      },
+    ],
+    byRegion: [
+      {
+        category: "us-east-1",
+        cost: 1795.13,
+        percentage: 70.0,
+        instanceCount: 18,
+      },
+      {
+        category: "us-west-2",
+        cost: 512.82,
+        percentage: 20.0,
+        instanceCount: 6,
+      },
+      {
+        category: "eu-west-1",
+        cost: 256.17,
+        percentage: 10.0,
+        instanceCount: 2,
+      },
+    ],
+  },
+  timeRange: {
+    start: "2024-08-01",
+    end: "2024-08-25",
+  },
+  lastUpdated: new Date().toISOString(),
+};

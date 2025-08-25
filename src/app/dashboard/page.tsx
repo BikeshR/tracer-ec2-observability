@@ -1,8 +1,14 @@
+'use client';
+
 import Image from "next/image";
+import CostAttributionPanel from "@/components/CostAttributionPanel";
 import CostOverview from "@/components/CostOverview";
 import EC2Table from "@/components/EC2Table";
+import { useInstancesKPI } from "@/hooks/useInstancesKPI";
 
 export default function DashboardPage() {
+  const { metrics, loading, error } = useInstancesKPI();
+
   return (
     <div className="min-h-screen bg-tracer-bg-primary">
       {/* Header */}
@@ -36,21 +42,21 @@ export default function DashboardPage() {
                 href="#instances"
                 className="text-tracer-info font-medium text-sm hover:text-tracer-text-primary transition-colors px-3"
               >
-                Instances
-              </a>
-              <div className="w-px h-4 bg-tracer-border"></div>
-              <a
-                href="#costs"
-                className="text-tracer-text-secondary text-sm hover:text-tracer-text-primary transition-colors px-3"
-              >
-                Cost Overview
+                1. Instances
               </a>
               <div className="w-px h-4 bg-tracer-border"></div>
               <a
                 href="#attribution"
                 className="text-tracer-text-secondary text-sm hover:text-tracer-text-primary transition-colors px-3"
               >
-                Cost Attribution
+                2. Attribution
+              </a>
+              <div className="w-px h-4 bg-tracer-border"></div>
+              <a
+                href="#costs"
+                className="text-tracer-text-secondary text-sm hover:text-tracer-text-primary transition-colors px-3"
+              >
+                3. Cost Overview
               </a>
             </nav>
           </div>
@@ -138,7 +144,13 @@ export default function DashboardPage() {
                     Active Instances
                   </p>
                   <p className="text-2xl font-semibold text-tracer-text-primary">
-                    --
+                    {loading ? (
+                      <span className="text-tracer-text-muted animate-pulse">...</span>
+                    ) : error ? (
+                      <span className="text-tracer-error text-sm">Error</span>
+                    ) : (
+                      metrics?.activeInstances ?? "--"
+                    )}
                   </p>
                 </div>
               </div>
@@ -170,7 +182,13 @@ export default function DashboardPage() {
                     Underutilized
                   </p>
                   <p className="text-2xl font-semibold text-tracer-text-primary">
-                    --
+                    {loading ? (
+                      <span className="text-tracer-text-muted animate-pulse">...</span>
+                    ) : error ? (
+                      <span className="text-tracer-error text-sm">Error</span>
+                    ) : (
+                      metrics?.underutilizedInstances ?? "--"
+                    )}
                   </p>
                 </div>
               </div>
@@ -202,7 +220,13 @@ export default function DashboardPage() {
                     Potential Savings
                   </p>
                   <p className="text-2xl font-semibold text-tracer-text-primary">
-                    --
+                    {loading ? (
+                      <span className="text-tracer-text-muted animate-pulse">...</span>
+                    ) : error ? (
+                      <span className="text-tracer-error text-sm">Error</span>
+                    ) : (
+                      metrics?.potentialSavings ?? "--"
+                    )}
                   </p>
                 </div>
               </div>
@@ -210,7 +234,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* EC2 Instances Table */}
+        {/* Component 1: EC2 Instance Utilisation Table */}
         <section id="instances" className="mb-12">
           {/* Technical Section Divider */}
           <div className="flex items-center mb-6">
@@ -218,7 +242,7 @@ export default function DashboardPage() {
             <div className="flex items-center px-4">
               <div className="w-2 h-2 bg-tracer-info rounded-full mr-2"></div>
               <span className="text-sm font-mono text-tracer-text-muted uppercase tracking-wider">
-                Live Instance Monitor
+                EC2 Instance Utilisation
               </span>
               <div className="w-2 h-2 bg-tracer-info rounded-full ml-2"></div>
             </div>
@@ -227,37 +251,38 @@ export default function DashboardPage() {
           <EC2Table />
         </section>
 
-        {/* Cost Overview Component */}
-        <section id="costs" className="mb-12">
+        {/* Component 2: Cost Attribution Panel */}
+        <section id="attribution" className="mb-12">
           {/* Technical Section Divider */}
           <div className="flex items-center mb-6">
             <div className="flex-1 h-px bg-tracer-border"></div>
             <div className="flex items-center px-4">
               <div className="w-2 h-2 bg-tracer-warning rounded-full mr-2"></div>
               <span className="text-sm font-mono text-tracer-text-muted uppercase tracking-wider">
-                Cost Analytics
+                Cost Attribution Analysis
               </span>
               <div className="w-2 h-2 bg-tracer-warning rounded-full ml-2"></div>
             </div>
             <div className="flex-1 h-px bg-tracer-border"></div>
           </div>
-          <CostOverview />
+          <CostAttributionPanel />
         </section>
 
-        <section id="attribution" className="mb-12">
-          <div className="bg-tracer-bg-secondary rounded-lg border border-tracer-border p-8 text-center">
-            <div className="text-tracer-text-muted text-4xl mb-4">🏷️</div>
-            <h3 className="text-lg font-semibold text-tracer-text-primary mb-2">
-              Cost Attribution
-            </h3>
-            <p className="text-tracer-text-secondary">
-              Cost breakdowns by team, environment, and resource tags will be
-              shown here.
-            </p>
-            <div className="mt-4 text-sm text-tracer-text-muted">
-              Coming soon...
+        {/* Component 3: Live Cloud Cost Overview */}
+        <section id="costs" className="mb-12">
+          {/* Technical Section Divider */}
+          <div className="flex items-center mb-6">
+            <div className="flex-1 h-px bg-tracer-border"></div>
+            <div className="flex items-center px-4">
+              <div className="w-2 h-2 bg-tracer-success rounded-full mr-2"></div>
+              <span className="text-sm font-mono text-tracer-text-muted uppercase tracking-wider">
+                Live Cost Analytics
+              </span>
+              <div className="w-2 h-2 bg-tracer-success rounded-full ml-2"></div>
             </div>
+            <div className="flex-1 h-px bg-tracer-border"></div>
           </div>
+          <CostOverview />
         </section>
       </main>
 
@@ -269,20 +294,12 @@ export default function DashboardPage() {
               © 2024 Tracer EC2 Observability Dashboard
             </div>
             <div className="flex items-center space-x-6 text-sm text-tracer-text-muted">
-              <button
-                type="button"
-                className="hover:text-tracer-text-secondary transition-colors cursor-pointer"
-                onClick={() => console.log("Documentation clicked")}
-              >
+              <span className="hover:text-tracer-text-secondary transition-colors cursor-pointer">
                 Documentation
-              </button>
-              <button
-                type="button"
-                className="hover:text-tracer-text-secondary transition-colors cursor-pointer"
-                onClick={() => console.log("Support clicked")}
-              >
+              </span>
+              <span className="hover:text-tracer-text-secondary transition-colors cursor-pointer">
                 Support
-              </button>
+              </span>
               <span className="text-xs bg-tracer-bg-tertiary text-tracer-text-secondary px-2 py-1 rounded border border-tracer-border">
                 Assessment Build
               </span>
