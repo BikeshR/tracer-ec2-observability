@@ -254,7 +254,11 @@ export default function CostAttributionPanel({
             <ToggleGroup
               type="single"
               value={viewMode}
-              onValueChange={setViewMode}
+              onValueChange={(value) => {
+                if (value === "table" || value === "chart") {
+                  setViewMode(value as ViewMode);
+                }
+              }}
             >
               <ToggleGroupItem value="table" aria-label="Table view">
                 <Table className="h-4 w-4" />
@@ -272,7 +276,9 @@ export default function CostAttributionPanel({
             </span>
             <Select
               value={selectedBreakdown}
-              onValueChange={setSelectedBreakdown}
+              onValueChange={(value) => {
+                setSelectedBreakdown(value as BreakdownType);
+              }}
             >
               <SelectTrigger className="w-48">
                 <SelectValue />
