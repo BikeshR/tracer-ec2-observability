@@ -4,14 +4,15 @@ import {
   BarChart3,
   DollarSign,
   Lightbulb,
-  PiggyBank,
   TrendingDown,
   TrendingUp,
+  Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { type CostData, mockCostData } from "@/lib/mock-data";
+import ResearchCostTrend from "./ResearchCostTrend";
 
 interface ApiResponse {
   costs: CostData;
@@ -66,10 +67,61 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
     loadCostData();
   }, []);
 
-  // Calculate savings opportunity from waste
-  const calculateSavingsOpportunity = (data: CostData): number => {
-    // Assume we can save 30% of total cost through optimization
-    return data.totalMonthlyCost * 0.3;
+  // Get waste level and color based on waste score
+  const getWasteLevel = (
+    score: number,
+  ): { level: string; color: string; bgColor: string } => {
+    if (score >= 70)
+      return {
+        level: "High Waste",
+        color: "text-red-600",
+        bgColor: "bg-red-500",
+      };
+    if (score >= 40)
+      return {
+        level: "Medium Waste",
+        color: "text-orange-600",
+        bgColor: "bg-orange-500",
+      };
+    if (score >= 20)
+      return {
+        level: "Low Waste",
+        color: "text-yellow-600",
+        bgColor: "bg-yellow-500",
+      };
+    return {
+      level: "Efficient",
+      color: "text-green-600",
+      bgColor: "bg-green-500",
+    };
+  };
+
+  // Get efficiency color based on waste score (inverted)
+  const getEfficiencyColor = (wasteScore: number): string => {
+    const efficiency = 100 - wasteScore;
+    if (efficiency >= 80) return "text-success";
+    if (efficiency >= 60) return "text-warning";
+    if (efficiency >= 40) return "text-warning";
+    return "text-destructive";
+  };
+
+  // Get efficiency background based on waste score (inverted) - clean: background color + balanced border
+  const getEfficiencyBackground = (wasteScore: number): string => {
+    const efficiency = 100 - wasteScore;
+    if (efficiency >= 80) return "bg-success/10 border-2 border-success";
+    if (efficiency >= 60) return "bg-warning/10 border-2 border-warning";
+    if (efficiency >= 40) return "bg-warning/10 border-2 border-warning";
+    return "bg-destructive/10 border-2 border-destructive";
+  };
+
+  // Calculate efficiency trend (positive means efficiency improved)
+  const getEfficiencyTrend = (
+    currentWasteScore: number,
+    previousWasteScore: number,
+  ): number => {
+    const currentEfficiency = 100 - currentWasteScore;
+    const previousEfficiency = 100 - previousWasteScore;
+    return currentEfficiency - previousEfficiency;
   };
 
   // Format currency
@@ -124,16 +176,66 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
   }
 
   const costData = data.costs;
-  const savingsOpportunity = calculateSavingsOpportunity(costData);
   const costChangePercent =
     ((costData.projectedMonthlyCost - costData.totalMonthlyCost) /
       costData.totalMonthlyCost) *
     100;
 
+  // Calculate period comparison percentages
+  const monthlyChangePercent =
+    ((costData.totalMonthlyCost - costData.totalMonthlyCostPreviousPeriod) /
+      costData.totalMonthlyCostPreviousPeriod) *
+    100;
+
+  const dailyChangePercent =
+    ((costData.dailyBurnRate - costData.dailyBurnRatePreviousPeriod) /
+      costData.dailyBurnRatePreviousPeriod) *
+    100;
+
+  // Get waste level information (currently unused)
+  const _wasteLevel = getWasteLevel(costData.wasteScore);
+
   return (
     <div className={`space-y-6 mb-8 ${className}`}>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Current Monthly Cost */}
+        {/* Resource Efficiency - Primary Status Indicator */}
+        <Card className={`${getEfficiencyBackground(costData.wasteScore)}`}>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Resource Efficiency
+            </CardTitle>
+            <Zap
+              className={`h-4 w-4 ${getEfficiencyColor(costData.wasteScore)}`}
+            />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {100 - costData.wasteScore}%
+            </div>
+            <div className="flex items-center text-xs text-muted-foreground mb-2">
+              {getEfficiencyTrend(
+                costData.wasteScore,
+                costData.wasteScorePreviousPeriod,
+              ) > 0 ? (
+                <TrendingUp className="mr-1 h-3 w-3 text-success" />
+              ) : (
+                <TrendingDown className="mr-1 h-3 w-3 text-destructive" />
+              )}
+              {Math.abs(
+                getEfficiencyTrend(
+                  costData.wasteScore,
+                  costData.wasteScorePreviousPeriod,
+                ),
+              ).toFixed(1)}
+              % vs last month
+            </div>
+            <div className="text-sm text-muted-foreground">
+              {formatCurrency(costData.wasteAmount)} currently wasted
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Current Monthly Cost - Baseline Reality */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Monthly Cost</CardTitle>
@@ -143,23 +245,18 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
             <div className="text-2xl font-bold">
               {formatCurrency(costData.totalMonthlyCost)}
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Daily Burn Rate */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Daily Burn</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(costData.dailyBurnRate)}
+            <div className="flex items-center text-xs text-muted-foreground">
+              {monthlyChangePercent > 0 ? (
+                <TrendingUp className="mr-1 h-3 w-3 text-destructive" />
+              ) : (
+                <TrendingDown className="mr-1 h-3 w-3 text-success" />
+              )}
+              {Math.abs(monthlyChangePercent).toFixed(1)}% vs last month
             </div>
           </CardContent>
         </Card>
 
-        {/* Projected Monthly Cost */}
+        {/* Projected Monthly Cost - Future Trajectory */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Projected</CardTitle>
@@ -180,105 +277,31 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
           </CardContent>
         </Card>
 
-        {/* Potential Savings */}
+        {/* Daily Burn Rate - Operational Detail */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Potential Savings
-            </CardTitle>
-            <PiggyBank className="h-4 w-4 text-success" />
+            <CardTitle className="text-sm font-medium">Daily Burn</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-success">
-              {formatCurrency(savingsOpportunity)}
+            <div className="text-2xl font-bold">
+              {formatCurrency(costData.dailyBurnRate)}
             </div>
-            <p className="text-xs text-muted-foreground">~30% optimization</p>
+            <div className="flex items-center text-xs text-muted-foreground">
+              {dailyChangePercent > 0 ? (
+                <TrendingUp className="mr-1 h-3 w-3 text-destructive" />
+              ) : (
+                <TrendingDown className="mr-1 h-3 w-3 text-success" />
+              )}
+              {Math.abs(dailyChangePercent).toFixed(1)}% vs yesterday
+            </div>
           </CardContent>
         </Card>
       </div>
 
       {/* Cost Breakdown Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Cost by Environment */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Cost by Environment</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {costData.costByEnvironment.map((item) => (
-              <div
-                key={item.environment}
-                className="flex items-center justify-between"
-              >
-                <div className="flex items-center space-x-3">
-                  <div
-                    className={`w-3 h-3 rounded-full ${
-                      item.environment === "Production"
-                        ? "bg-destructive"
-                        : item.environment === "Development"
-                          ? "bg-warning"
-                          : "bg-chart-1"
-                    }`}
-                  ></div>
-                  <span className="text-sm font-medium">
-                    {item.environment}
-                  </span>
-                </div>
-                <span className="text-sm font-semibold">
-                  {formatCurrency(item.cost)}
-                </span>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        {/* Cost Anomalies */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Anomalies</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {costData.anomalies.length > 0 ? (
-              <div className="space-y-3">
-                {costData.anomalies.map((anomaly) => (
-                  <div
-                    key={anomaly.date}
-                    className="flex items-center justify-between p-3 rounded-lg border border-destructive/20 bg-destructive/5"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-destructive rounded-full" />
-                      <div>
-                        <p className="text-sm font-medium">
-                          Cost Spike Detected
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(anomaly.date).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-destructive">
-                        +
-                        {formatCurrency(
-                          anomaly.actualCost - anomaly.expectedCost,
-                        )}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        vs expected
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex items-center justify-center h-20 text-muted-foreground">
-                <p className="text-sm">No cost anomalies detected</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Smart Suggestions */}
+        {/* Smart Suggestions - Immediate Actions */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -324,6 +347,58 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
                 </div>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Research Cost Pattern - Root Cause Analysis */}
+        <ResearchCostTrend
+          data={costData.costTrend}
+          weeklyEfficiencyScore={costData.weeklyEfficiencyScore}
+        />
+
+        {/* Cost Anomalies - Historical Incidents */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Anomalies</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {costData.anomalies.length > 0 ? (
+              <div className="space-y-3">
+                {costData.anomalies.map((anomaly) => (
+                  <div
+                    key={anomaly.date}
+                    className="flex items-center justify-between p-3 rounded-lg border border-destructive/20 bg-destructive/5"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-2 h-2 bg-destructive rounded-full" />
+                      <div>
+                        <p className="text-sm font-medium">
+                          Cost Spike Detected
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {new Date(anomaly.date).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-semibold text-destructive">
+                        +
+                        {formatCurrency(
+                          anomaly.actualCost - anomaly.expectedCost,
+                        )}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        vs expected
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-20 text-muted-foreground">
+                <p className="text-sm">No cost anomalies detected</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

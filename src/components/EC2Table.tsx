@@ -188,7 +188,7 @@ export default function EC2Table() {
           bgClass: "bg-emerald-500/10",
           textClass: "text-emerald-500",
           badgeClass:
-            "bg-emerald-500/10 text-emerald-500 border border-tracer-success/20",
+            "bg-emerald-500/10 text-emerald-500 border border-success/20",
           icon: "🟢",
           label: "Efficient",
         };
@@ -206,14 +206,14 @@ export default function EC2Table() {
   // const getStateStyling = (state: string) => {
   //   switch (state.toLowerCase()) {
   //     case "running":
-  //       return "bg-emerald-500/10 text-emerald-500 border border-tracer-success/20";
+  //       return "bg-emerald-500/10 text-emerald-500 border border-success/20";
   //     case "stopped":
   //       return "bg-tracer-bg-tertiary text-tracer-text-secondary border border-tracer-border";
   //     case "pending":
   //       return "bg-tracer-info/10 text-tracer-info border border-tracer-info/20";
   //     case "shutting-down":
   //     case "stopping":
-  //       return "bg-yellow-500/10 text-yellow-500 border border-tracer-warning/20";
+  //       return "bg-yellow-500/10 text-yellow-500 border border-warning/20";
   //     case "terminated":
   //       return "bg-red-500/10 text-red-500 border border-red-500/20";
   //     default:

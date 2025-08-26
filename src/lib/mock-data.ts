@@ -214,17 +214,117 @@ const generateLargeDataset = () => {
 export const mockEC2Instances: EC2Instance[] = generateLargeDataset();
 
 // Cost data for cost attribution and overview components
+// Enhanced cost trend for research workflow pattern recognition
+export interface CostTrendPoint {
+  date: string;
+  actualCost: number;
+  baselineCost: number; // Expected research pattern cost
+  pattern: "efficient" | "research_activity" | "wasteful" | "idle";
+  annotation?: string; // Explanation of the pattern
+  efficiencyScore: number; // 0-100
+}
+
 export interface CostData {
   totalMonthlyCost: number;
+  totalMonthlyCostPreviousPeriod: number; // Previous month for comparison
   dailyBurnRate: number;
+  dailyBurnRatePreviousPeriod: number; // Previous week for comparison
   projectedMonthlyCost: number;
+  wasteScore: number; // 0-100 waste score
+  wasteScorePreviousPeriod: number; // Previous period waste score for comparison
+  wasteAmount: number; // Dollar amount of waste detected
   costByTeam: { team: string; cost: number }[];
   costByEnvironment: { environment: string; cost: number }[];
   costByRegion: { region: string; cost: number }[];
   unattributedCost: number;
-  costTrend: { date: string; cost: number }[];
+  costTrend: CostTrendPoint[]; // Enhanced with research pattern intelligence
   anomalies: { date: string; expectedCost: number; actualCost: number }[];
+  weeklyEfficiencyScore: number; // Overall weekly efficiency A-F equivalent
 }
+
+// Generate 7-day research workflow pattern with intelligence
+const generateResearchWorkflowPattern = (
+  dailyBaseline: number,
+): CostTrendPoint[] => {
+  const today = new Date();
+  const trendData: CostTrendPoint[] = [];
+
+  // Research workflow patterns (based on academic computing usage)
+  const dayPatterns = {
+    monday: { baseMultiplier: 0.9, typical: "High research activity start" },
+    tuesday: { baseMultiplier: 1.1, typical: "Peak computational workloads" },
+    wednesday: { baseMultiplier: 1.2, typical: "Mid-week research peak" },
+    thursday: { baseMultiplier: 1.0, typical: "Steady research activity" },
+    friday: { baseMultiplier: 0.8, typical: "Research wind-down" },
+    saturday: { baseMultiplier: 0.3, typical: "Weekend minimal activity" },
+    sunday: { baseMultiplier: 0.2, typical: "Weekend idle resources" },
+  };
+
+  const dayNames = [
+    "sunday",
+    "monday",
+    "tuesday",
+    "wednesday",
+    "thursday",
+    "friday",
+    "saturday",
+  ];
+
+  for (let i = 6; i >= 0; i--) {
+    const date = new Date(today);
+    date.setDate(date.getDate() - i);
+    const dayName = dayNames[date.getDay()] as keyof typeof dayPatterns;
+    const dayPattern = dayPatterns[dayName];
+
+    // Calculate baseline expected cost
+    const baselineCost = dailyBaseline * dayPattern.baseMultiplier;
+
+    // Add some realistic variance to actual costs
+    const variance = 0.15 + Math.random() * 0.3; // 15-45% variance
+    const actualCost = baselineCost * (0.7 + variance);
+
+    // Determine pattern based on actual vs baseline efficiency
+    const efficiency = (baselineCost / actualCost) * 100;
+    let patternType: CostTrendPoint["pattern"];
+    let annotation: string;
+
+    if (efficiency > 90) {
+      patternType = "efficient";
+      annotation = `Optimal usage - ${dayPattern.typical.toLowerCase()}`;
+    } else if (efficiency > 70) {
+      patternType = "research_activity";
+      annotation = dayPattern.typical;
+    } else if (efficiency > 40) {
+      patternType = "wasteful";
+      annotation = `Inefficient resources - ${Math.round((1 - efficiency / 100) * 100)}% waste detected`;
+    } else {
+      patternType = "idle";
+      annotation = "Idle resources detected - consider shutdown";
+    }
+
+    // Weekend special cases
+    if (dayName === "saturday" || dayName === "sunday") {
+      if (actualCost > baselineCost * 1.5) {
+        patternType = "wasteful";
+        annotation = "Unexpected weekend activity - check for runaway jobs";
+      } else if (actualCost < baselineCost * 1.2) {
+        patternType = "efficient";
+        annotation = "Good weekend resource management";
+      }
+    }
+
+    trendData.push({
+      date: date.toISOString().split("T")[0],
+      actualCost: Math.round(actualCost * 100) / 100,
+      baselineCost: Math.round(baselineCost * 100) / 100,
+      pattern: patternType,
+      annotation,
+      efficiencyScore: Math.round(Math.min(efficiency, 100)),
+    });
+  }
+
+  return trendData;
+};
 
 // Generate cost data based on the large dataset
 const generateCostData = (): CostData => {
@@ -238,6 +338,24 @@ const generateCostData = (): CostData => {
   );
   const dailyBurnRate = totalMonthlyCost / 30;
   const projectedMonthlyCost = totalMonthlyCost * 1.08; // 8% growth projection
+
+  // Calculate previous period comparisons with realistic variance
+  const totalMonthlyCostPreviousPeriod =
+    totalMonthlyCost * (0.88 + Math.random() * 0.24); // ±12% variance from current
+  const dailyBurnRatePreviousPeriod =
+    dailyBurnRate * (0.92 + Math.random() * 0.16); // ±8% variance from current
+
+  // Calculate waste metrics based on instance efficiency
+  const avgEfficiencyScore =
+    runningInstances.reduce(
+      (sum, instance) => sum + instance.efficiencyScore,
+      0,
+    ) / runningInstances.length;
+  const wasteScore = Math.round(100 - avgEfficiencyScore); // Higher score = more waste
+  const wasteScorePreviousPeriod = Math.round(
+    wasteScore * (0.85 + Math.random() * 0.3),
+  ); // ±15% variance from current
+  const wasteAmount = totalMonthlyCost * (wasteScore / 100) * 0.4; // Realistic waste calculation
 
   // Group by teams for cost breakdown
   const teamCosts = new Map<string, number>();
@@ -263,8 +381,15 @@ const generateCostData = (): CostData => {
 
   return {
     totalMonthlyCost: Math.round(totalMonthlyCost * 100) / 100,
+    totalMonthlyCostPreviousPeriod:
+      Math.round(totalMonthlyCostPreviousPeriod * 100) / 100,
     dailyBurnRate: Math.round(dailyBurnRate * 100) / 100,
+    dailyBurnRatePreviousPeriod:
+      Math.round(dailyBurnRatePreviousPeriod * 100) / 100,
     projectedMonthlyCost: Math.round(projectedMonthlyCost * 100) / 100,
+    wasteScore: Math.round(wasteScore),
+    wasteScorePreviousPeriod: Math.round(wasteScorePreviousPeriod),
+    wasteAmount: Math.round(wasteAmount * 100) / 100,
     costByTeam: Array.from(teamCosts.entries())
       .map(([team, cost]) => ({ team, cost: Math.round(cost * 100) / 100 }))
       .sort((a, b) => b.cost - a.cost),
@@ -278,21 +403,7 @@ const generateCostData = (): CostData => {
       .map(([region, cost]) => ({ region, cost: Math.round(cost * 100) / 100 }))
       .sort((a, b) => b.cost - a.cost),
     unattributedCost: Math.round(totalMonthlyCost * 0.12 * 100) / 100, // 12% unattributed
-    costTrend: [
-      {
-        date: "2024-01-01",
-        cost: Math.round(totalMonthlyCost * 0.1 * 100) / 100,
-      },
-      {
-        date: "2024-01-15",
-        cost: Math.round(totalMonthlyCost * 0.7 * 100) / 100,
-      },
-      {
-        date: "2024-01-20",
-        cost: Math.round(totalMonthlyCost * 0.9 * 100) / 100,
-      },
-      { date: "2024-01-25", cost: Math.round(totalMonthlyCost * 100) / 100 },
-    ],
+    costTrend: generateResearchWorkflowPattern(dailyBurnRate),
     anomalies: [
       {
         date: "2024-01-18",
@@ -305,7 +416,18 @@ const generateCostData = (): CostData => {
         actualCost: Math.round(totalMonthlyCost * 1.15 * 100) / 100,
       },
     ],
+    weeklyEfficiencyScore: calculateWeeklyEfficiency(
+      generateResearchWorkflowPattern(dailyBurnRate),
+    ),
   };
+};
+
+// Calculate overall weekly efficiency score from trend data
+const calculateWeeklyEfficiency = (trendData: CostTrendPoint[]): number => {
+  const averageEfficiency =
+    trendData.reduce((sum, point) => sum + point.efficiencyScore, 0) /
+    trendData.length;
+  return Math.round(averageEfficiency);
 };
 
 export const mockCostData: CostData = generateCostData();
@@ -417,7 +539,7 @@ const generateAttributionData = () => {
   const teamBreakdownArray = Array.from(teamCosts.entries())
     .map(([teamName, data]) => ({
       teamName,
-      piName: teamName.split(" ")[0] + " " + teamName.split(" ")[1], // Extract PI name from team
+      piName: `${teamName.split(" ")[0]} ${teamName.split(" ")[1]}`, // Extract PI name from team
       totalCost: Math.round(data.cost * 100) / 100,
       instanceCount: data.instanceCount,
       efficiency:
