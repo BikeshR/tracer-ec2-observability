@@ -4,7 +4,7 @@ import {
   GetDimensionValuesCommand,
 } from "@aws-sdk/client-cost-explorer";
 import { NextResponse } from "next/server";
-import { type CostData, mockCostData } from "@/lib/mock-data";
+import { type CostData, type CostTrendPoint, mockCostData } from "@/lib/mock-data";
 
 // Environment-aware data source switching
 const useMockData =
@@ -77,7 +77,7 @@ async function fetchAWSCostData(): Promise<CostData> {
 
     // Calculate totals from AWS response
     let totalMonthlyCost = 0;
-    const costTrend: { date: string; cost: number }[] = [];
+    const costTrend: CostTrendPoint[] = [];
 
     if (costResponse.ResultsByTime) {
       for (const result of costResponse.ResultsByTime) {
@@ -85,9 +85,22 @@ async function fetchAWSCostData(): Promise<CostData> {
         totalMonthlyCost += dailyCost;
 
         if (result.TimePeriod?.Start) {
+          // Convert AWS data to CostTrendPoint format
+          const baselineCost = dailyCost * 0.8; // Assume baseline is 80% of actual
+          const efficiencyScore = Math.min(100, (baselineCost / dailyCost) * 100);
+          
+          let pattern: "efficient" | "research_activity" | "wasteful" | "idle";
+          if (efficiencyScore >= 80) pattern = "efficient";
+          else if (efficiencyScore >= 60) pattern = "research_activity";
+          else if (efficiencyScore >= 30) pattern = "wasteful";
+          else pattern = "idle";
+
           costTrend.push({
             date: result.TimePeriod.Start,
-            cost: dailyCost,
+            actualCost: dailyCost,
+            baselineCost,
+            pattern,
+            efficiencyScore,
           });
         }
       }
@@ -98,10 +111,16 @@ async function fetchAWSCostData(): Promise<CostData> {
     const projectedMonthlyCost = dailyBurnRate * 30; // Project for full month
 
     // Structure real AWS data to match our CostData interface
+    const wasteScore = 45; // Would calculate from actual utilization data
     const awsCostData: CostData = {
       totalMonthlyCost,
+      totalMonthlyCostPreviousPeriod: totalMonthlyCost * 0.95, // Simulate 5% lower previous month
       dailyBurnRate,
+      dailyBurnRatePreviousPeriod: dailyBurnRate * 1.02, // Simulate 2% higher previous week
       projectedMonthlyCost,
+      wasteScore,
+      wasteScorePreviousPeriod: wasteScore + 8, // Simulate improvement in waste reduction
+      wasteAmount: totalMonthlyCost * (wasteScore / 100), // Calculate waste amount
       costByTeam, // Using mock structure (tags would require more complex query)
       costByEnvironment, // Using mock structure (tags would require more complex query)
       costByRegion: [
@@ -113,6 +132,7 @@ async function fetchAWSCostData(): Promise<CostData> {
       unattributedCost: 0,
       costTrend: costTrend.length > 0 ? costTrend : mockCostData.costTrend,
       anomalies: mockCostData.anomalies, // Would require separate anomaly detection API
+      weeklyEfficiencyScore: 100 - wasteScore, // Invert waste score to get efficiency
     };
 
     return awsCostData;
