@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { EC2Instance } from "@/lib/mock-data";
 import { useFilteredData } from "@/hooks/useFilteredData";
+import type { EC2Instance } from "@/lib/mock-data";
 
 interface ApiResponse {
   instances: EC2Instance[];

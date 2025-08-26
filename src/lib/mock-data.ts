@@ -205,19 +205,19 @@ export interface AttributionBreakdown {
 
 // Enhanced Attribution with Grant and PI Information
 export interface GrantBreakdown {
-  grantId: string;        // "NIH R01-2024-001"
-  grantName: string;      // "Genomics Research Initiative"
-  piName: string;         // "Dr. Sarah Chen"
+  grantId: string; // "NIH R01-2024-001"
+  grantName: string; // "Genomics Research Initiative"
+  piName: string; // "Dr. Sarah Chen"
   allocatedCost: number;
   percentage: number;
 }
 
 export interface TeamBreakdown {
-  teamName: string;       // "Chen Lab (Genomics)"
+  teamName: string; // "Chen Lab (Genomics)"
   piName: string;
   totalCost: number;
   instanceCount: number;
-  efficiency: 'high' | 'medium' | 'low';
+  efficiency: "high" | "medium" | "low";
 }
 
 export interface ResearchAttribution {
@@ -283,21 +283,21 @@ export const mockResearchAttribution: ResearchAttribution = {
       piName: "Sarah Chen",
       totalCost: 1245.67,
       instanceCount: 12,
-      efficiency: 'high',
+      efficiency: "high",
     },
     {
       teamName: "Rodriguez Team",
-      piName: "Maria Rodriguez", 
+      piName: "Maria Rodriguez",
       totalCost: 892.34,
       instanceCount: 8,
-      efficiency: 'medium',
+      efficiency: "medium",
     },
     {
       teamName: "Watson Team",
       piName: "David Watson",
       totalCost: 426.11,
       instanceCount: 6,
-      efficiency: 'high',
+      efficiency: "high",
     },
   ],
 };
@@ -317,7 +317,7 @@ export const mockAttributionData: AttributionData = {
         instanceCount: 12,
       },
       {
-        category: "Rodriguez Lab", 
+        category: "Rodriguez Lab",
         cost: 892.34,
         percentage: 34.8,
         instanceCount: 8,

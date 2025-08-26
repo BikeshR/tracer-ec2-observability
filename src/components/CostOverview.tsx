@@ -1,10 +1,17 @@
 "use client";
 
+import {
+  BarChart3,
+  DollarSign,
+  Lightbulb,
+  PiggyBank,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
 import { useEffect, useState } from "react";
-import { type CostData, mockCostData } from "@/lib/mock-data";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { DollarSign, TrendingUp, BarChart3, PiggyBank, TrendingDown, Lightbulb } from "lucide-react";
+import { type CostData, mockCostData } from "@/lib/mock-data";
 
 interface ApiResponse {
   costs: CostData;
@@ -129,9 +136,7 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
         {/* Current Monthly Cost */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Monthly Cost
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Monthly Cost</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -144,9 +149,7 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
         {/* Daily Burn Rate */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Daily Burn
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Daily Burn</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -159,9 +162,7 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
         {/* Projected Monthly Cost */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Projected
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Projected</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -191,9 +192,7 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
             <div className="text-2xl font-bold text-success">
               {formatCurrency(savingsOpportunity)}
             </div>
-            <p className="text-xs text-muted-foreground">
-              ~30% optimization
-            </p>
+            <p className="text-xs text-muted-foreground">~30% optimization</p>
           </CardContent>
         </Card>
       </div>
@@ -221,9 +220,13 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
                           : "bg-chart-1"
                     }`}
                   ></div>
-                  <span className="text-sm font-medium">{item.environment}</span>
+                  <span className="text-sm font-medium">
+                    {item.environment}
+                  </span>
                 </div>
-                <span className="text-sm font-semibold">{formatCurrency(item.cost)}</span>
+                <span className="text-sm font-semibold">
+                  {formatCurrency(item.cost)}
+                </span>
               </div>
             ))}
           </CardContent>
@@ -245,7 +248,9 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
                     <div className="flex items-center space-x-3">
                       <div className="w-2 h-2 bg-destructive rounded-full" />
                       <div>
-                        <p className="text-sm font-medium">Cost Spike Detected</p>
+                        <p className="text-sm font-medium">
+                          Cost Spike Detected
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {new Date(anomaly.date).toLocaleDateString()}
                         </p>
@@ -253,9 +258,14 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-semibold text-destructive">
-                        +{formatCurrency(anomaly.actualCost - anomaly.expectedCost)}
+                        +
+                        {formatCurrency(
+                          anomaly.actualCost - anomaly.expectedCost,
+                        )}
                       </p>
-                      <p className="text-xs text-muted-foreground">vs expected</p>
+                      <p className="text-xs text-muted-foreground">
+                        vs expected
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -281,7 +291,9 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
               <div className="flex items-start space-x-3">
                 <div className="w-2 h-2 bg-warning rounded-full mt-2" />
                 <div>
-                  <p className="text-sm font-medium">Stop Underused Instances</p>
+                  <p className="text-sm font-medium">
+                    Stop Underused Instances
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     1 instance with &lt;5% CPU usage detected
                   </p>
@@ -292,7 +304,9 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
               <div className="flex items-start space-x-3">
                 <div className="w-2 h-2 bg-chart-1 rounded-full mt-2" />
                 <div>
-                  <p className="text-sm font-medium">Optimize Instance Sizing</p>
+                  <p className="text-sm font-medium">
+                    Optimize Instance Sizing
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     Potential $7.52/month savings available
                   </p>

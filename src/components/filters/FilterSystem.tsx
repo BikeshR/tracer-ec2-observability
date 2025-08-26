@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import type React from "react";
 import FilterSelect from "./FilterSelect";
 import ManageViewsDialog from "./ManageViewsDialog";
 

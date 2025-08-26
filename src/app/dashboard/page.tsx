@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { Database, RefreshCw } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
 import CostAttributionPanel from "@/components/CostAttributionPanel";
 import CostOverview from "@/components/CostOverview";
 import EC2Table from "@/components/EC2Table";
 import { FilterProvider, FilterSystem } from "@/components/filters";
-import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Database } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 export default function DashboardPage() {
   const [lastRefresh, setLastRefresh] = useState(new Date());
@@ -18,7 +18,7 @@ export default function DashboardPage() {
   const handleRefresh = async () => {
     setIsRefreshing(true);
     // Simulate refresh delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
     setLastRefresh(new Date());
     setIsRefreshing(false);
     // In real implementation, this would trigger data refetch
@@ -46,7 +46,7 @@ export default function DashboardPage() {
                   </div>
                   <Separator orientation="vertical" className="h-6" />
                 </div>
-                
+
                 {/* Title Section */}
                 <div>
                   <h1 className="text-xl font-bold text-foreground tracking-tight">
@@ -60,7 +60,10 @@ export default function DashboardPage() {
                 {/* Enhanced Data Source Status */}
                 <div className="hidden lg:flex items-center space-x-3">
                   <div className="flex items-center space-x-2 text-sm">
-                    <Badge variant="secondary" className="flex items-center gap-1.5 px-2.5">
+                    <Badge
+                      variant="secondary"
+                      className="flex items-center gap-1.5 px-2.5"
+                    >
                       <Database className="h-3 w-3" />
                       Mock Data
                     </Badge>
@@ -79,7 +82,9 @@ export default function DashboardPage() {
                   className="h-8 px-3 hover:bg-background"
                   title="Refresh Data"
                 >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw
+                    className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
+                  />
                   Refresh
                 </Button>
               </div>

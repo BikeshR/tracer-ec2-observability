@@ -1,14 +1,24 @@
 "use client";
 
+import { BarChart3, DollarSign, Info, Table } from "lucide-react";
 import { useEffect, useState } from "react";
-import { type AttributionData, mockAttributionData, type ResearchAttribution, mockResearchAttribution } from "@/lib/mock-data";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Table, BarChart3, DollarSign, CheckCircle, AlertTriangle, Info } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import {
+  type AttributionData,
+  mockAttributionData,
+  mockResearchAttribution,
+} from "@/lib/mock-data";
 
 interface ApiResponse {
   attribution: AttributionData;
@@ -108,7 +118,9 @@ export default function CostAttributionPanel({
   // Loading state
   if (loading) {
     return (
-      <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 ${className}`}>
+      <div
+        className={`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 ${className}`}
+      >
         <Card>
           <CardHeader>
             <Skeleton className="h-6 w-48" />
@@ -135,7 +147,9 @@ export default function CostAttributionPanel({
 
   if (!data) {
     return (
-      <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 ${className}`}>
+      <div
+        className={`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 ${className}`}
+      >
         <Card className="flex items-center justify-center p-8 text-center">
           <CardContent>
             <div className="text-muted-foreground text-2xl mb-2">🏷️</div>
@@ -194,19 +208,34 @@ export default function CostAttributionPanel({
 
           {/* Grants Table */}
           <div className="space-y-3">
-            <div className="text-sm font-medium text-muted-foreground">Active Grants</div>
+            <div className="text-sm font-medium text-muted-foreground">
+              Active Grants
+            </div>
             {mockResearchAttribution.grantBreakdown.map((grant) => (
-              <div key={grant.grantId} className="flex items-center justify-between p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors">
+              <div
+                key={grant.grantId}
+                className="flex items-center justify-between p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+              >
                 <div className="flex-1">
                   <div className="flex items-center space-x-2">
-                    <Badge variant="secondary" className="text-xs">{grant.grantId}</Badge>
-                    <span className="text-sm font-medium">{grant.grantName}</span>
+                    <Badge variant="secondary" className="text-xs">
+                      {grant.grantId}
+                    </Badge>
+                    <span className="text-sm font-medium">
+                      {grant.grantName}
+                    </span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">PI: {grant.piName}</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    PI: {grant.piName}
+                  </p>
                 </div>
                 <div className="text-right">
-                  <div className="text-sm font-semibold">{formatCurrency(grant.allocatedCost)}</div>
-                  <div className="text-xs text-muted-foreground">{grant.percentage.toFixed(1)}%</div>
+                  <div className="text-sm font-semibold">
+                    {formatCurrency(grant.allocatedCost)}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {grant.percentage.toFixed(1)}%
+                  </div>
                 </div>
               </div>
             ))}
@@ -222,7 +251,11 @@ export default function CostAttributionPanel({
               <BarChart3 className="h-5 w-5 text-muted-foreground" />
               <span>Cost Analysis Dashboard</span>
             </CardTitle>
-            <ToggleGroup type="single" value={viewMode} onValueChange={setViewMode}>
+            <ToggleGroup
+              type="single"
+              value={viewMode}
+              onValueChange={setViewMode}
+            >
               <ToggleGroupItem value="table" aria-label="Table view">
                 <Table className="h-4 w-4" />
               </ToggleGroupItem>
@@ -231,11 +264,16 @@ export default function CostAttributionPanel({
               </ToggleGroupItem>
             </ToggleGroup>
           </div>
-          
+
           {/* Controls */}
           <div className="flex items-center space-x-3 pt-2">
-            <span className="text-sm font-medium text-muted-foreground">Group by:</span>
-            <Select value={selectedBreakdown} onValueChange={setSelectedBreakdown}>
+            <span className="text-sm font-medium text-muted-foreground">
+              Group by:
+            </span>
+            <Select
+              value={selectedBreakdown}
+              onValueChange={setSelectedBreakdown}
+            >
               <SelectTrigger className="w-48">
                 <SelectValue />
               </SelectTrigger>
@@ -269,19 +307,26 @@ export default function CostAttributionPanel({
                       <div>
                         <p className="text-sm font-medium">{item.category}</p>
                         <p className="text-xs text-muted-foreground">
-                          {item.instanceCount} instance{item.instanceCount !== 1 ? "s" : ""}
+                          {item.instanceCount} instance
+                          {item.instanceCount !== 1 ? "s" : ""}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-semibold">{formatCurrency(item.cost)}</p>
-                      <p className="text-xs text-muted-foreground">{item.percentage.toFixed(1)}%</p>
+                      <p className="text-sm font-semibold">
+                        {formatCurrency(item.cost)}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.percentage.toFixed(1)}%
+                      </p>
                     </div>
                   </div>
                 ))
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
-                  <p className="text-sm">No attribution data available for this breakdown</p>
+                  <p className="text-sm">
+                    No attribution data available for this breakdown
+                  </p>
                 </div>
               )}
             </div>
@@ -303,7 +348,9 @@ export default function CostAttributionPanel({
                       </div>
                       <div className="flex items-center space-x-2 text-muted-foreground">
                         <span>{formatCurrency(item.cost)}</span>
-                        <span className="text-xs">({item.percentage.toFixed(1)}%)</span>
+                        <span className="text-xs">
+                          ({item.percentage.toFixed(1)}%)
+                        </span>
                       </div>
                     </div>
                     <Progress value={item.percentage} className="h-3" />

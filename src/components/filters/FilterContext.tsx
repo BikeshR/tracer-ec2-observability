@@ -2,18 +2,21 @@
 
 import React, {
   createContext,
+  type ReactNode,
   useContext,
-  useState,
   useEffect,
-  ReactNode,
+  useState,
 } from "react";
-import { FilterState, FilterSet, FilterContextType } from "@/types/filters";
 import {
+  generateFilterSetId,
   loadFiltersFromStorage,
   saveFiltersToStorage,
-  getDefaultFilterState,
-  generateFilterSetId,
 } from "@/lib/filter-storage";
+import type {
+  FilterContextType,
+  FilterSet,
+  FilterState,
+} from "@/types/filters";
 
 // Create the context
 const FilterContext = createContext<FilterContextType | undefined>(undefined);
@@ -27,7 +30,10 @@ export const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
   console.log("FilterProvider rendering...");
   const [filterState, setFilterState] = useState<FilterState>(() => {
     const state = loadFiltersFromStorage();
-    console.log("Initial filter state:", state.filterSets.map(fs => `${fs.id}: ${fs.name}`));
+    console.log(
+      "Initial filter state:",
+      state.filterSets.map((fs) => `${fs.id}: ${fs.name}`),
+    );
     return state;
   });
 

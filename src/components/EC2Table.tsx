@@ -1,8 +1,10 @@
 "use client";
 
+import { ChevronDown, ChevronUp, Server } from "lucide-react";
 import { useEffect, useState } from "react";
-import type { EC2Instance } from "@/lib/mock-data";
-import { useFilteredData } from "@/hooks/useFilteredData";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -11,10 +13,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChevronUp, ChevronDown, Server } from "lucide-react";
+import { useFilteredData } from "@/hooks/useFilteredData";
+import type { EC2Instance } from "@/lib/mock-data";
 
 interface ApiResponse {
   instances: EC2Instance[];
@@ -77,11 +77,9 @@ export default function EC2Table() {
     })) || [];
 
   // Apply filters
-  const {
-    filteredData: filteredInstances,
-    totalCount,
-    filteredCount,
-  } = useFilteredData(instancesForFiltering);
+  const { filteredData: filteredInstances } = useFilteredData(
+    instancesForFiltering,
+  );
 
   // Sort filtered instances
   const sortedInstances =
@@ -120,10 +118,7 @@ export default function EC2Table() {
   };
 
   // Get waste level styling
-  const getWasteLevelStyling = (
-    wasteLevel: "low" | "medium" | "high",
-    _efficiencyScore: number,
-  ) => {
+  const getWasteLevelStyling = (wasteLevel: "low" | "medium" | "high") => {
     switch (wasteLevel) {
       case "high":
         return {
@@ -138,8 +133,7 @@ export default function EC2Table() {
         return {
           bgClass: "bg-warning/10",
           textClass: "text-warning",
-          badgeClass:
-            "bg-warning/10 text-warning border border-warning/20",
+          badgeClass: "bg-warning/10 text-warning border border-warning/20",
           icon: "🟡",
           label: "Medium Waste",
         };
@@ -182,7 +176,9 @@ export default function EC2Table() {
   // };
 
   // Get Badge variant for instance state
-  const getStateVariant = (state: string): "default" | "secondary" | "destructive" | "outline" => {
+  const getStateVariant = (
+    state: string,
+  ): "default" | "secondary" | "destructive" | "outline" => {
     switch (state.toLowerCase()) {
       case "running":
         return "default";
@@ -196,7 +192,9 @@ export default function EC2Table() {
   };
 
   // Get Badge variant for waste level
-  const getWasteVariant = (wasteLevel: string): "default" | "secondary" | "destructive" | "outline" => {
+  const getWasteVariant = (
+    wasteLevel: string,
+  ): "default" | "secondary" | "destructive" | "outline" => {
     switch (wasteLevel) {
       case "high":
         return "destructive";
@@ -278,231 +276,222 @@ export default function EC2Table() {
           <Table>
             <TableHeader>
               <TableRow>
-              <TableHead className="w-[200px]">
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort("name")}
-                  className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
-                >
-                  Instance
-                  {sortField === "name" && (
-                    sortDirection === "asc" ? (
-                      <ChevronUp className="ml-1 h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="ml-1 h-4 w-4" />
-                    )
-                  )}
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort("cpuUtilization")}
-                  className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
-                >
-                  CPU Usage
-                  {sortField === "cpuUtilization" && (
-                    sortDirection === "asc" ? (
-                      <ChevronUp className="ml-1 h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="ml-1 h-4 w-4" />
-                    )
-                  )}
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort("memoryUtilization")}
-                  className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
-                >
-                  Memory %
-                  {sortField === "memoryUtilization" && (
-                    sortDirection === "asc" ? (
-                      <ChevronUp className="ml-1 h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="ml-1 h-4 w-4" />
-                    )
-                  )}
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort("costPerHour")}
-                  className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
-                >
-                  Cost/Hour
-                  {sortField === "costPerHour" && (
-                    sortDirection === "asc" ? (
-                      <ChevronUp className="ml-1 h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="ml-1 h-4 w-4" />
-                    )
-                  )}
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort("state")}
-                  className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
-                >
-                  State
-                  {sortField === "state" && (
-                    sortDirection === "asc" ? (
-                      <ChevronUp className="ml-1 h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="ml-1 h-4 w-4" />
-                    )
-                  )}
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort("efficiencyScore")}
-                  className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
-                >
-                  Efficiency
-                  {sortField === "efficiencyScore" && (
-                    sortDirection === "asc" ? (
-                      <ChevronUp className="ml-1 h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="ml-1 h-4 w-4" />
-                    )
-                  )}
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort("wasteLevel")}
-                  className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
-                >
-                  Waste Alert
-                  {sortField === "wasteLevel" && (
-                    sortDirection === "asc" ? (
-                      <ChevronUp className="ml-1 h-4 w-4" />
-                    ) : (
-                      <ChevronDown className="ml-1 h-4 w-4" />
-                    )
-                  )}
-                </Button>
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {sortedInstances.map((instance) => {
-              const wasteStyling = getWasteLevelStyling(
-                instance.wasteLevel,
-                instance.efficiencyScore,
-              );
+                <TableHead className="w-[200px]">
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort("name")}
+                    className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
+                  >
+                    Instance
+                    {sortField === "name" &&
+                      (sortDirection === "asc" ? (
+                        <ChevronUp className="ml-1 h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="ml-1 h-4 w-4" />
+                      ))}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort("cpuUtilization")}
+                    className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
+                  >
+                    CPU Usage
+                    {sortField === "cpuUtilization" &&
+                      (sortDirection === "asc" ? (
+                        <ChevronUp className="ml-1 h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="ml-1 h-4 w-4" />
+                      ))}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort("memoryUtilization")}
+                    className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
+                  >
+                    Memory %
+                    {sortField === "memoryUtilization" &&
+                      (sortDirection === "asc" ? (
+                        <ChevronUp className="ml-1 h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="ml-1 h-4 w-4" />
+                      ))}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort("costPerHour")}
+                    className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
+                  >
+                    Cost/Hour
+                    {sortField === "costPerHour" &&
+                      (sortDirection === "asc" ? (
+                        <ChevronUp className="ml-1 h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="ml-1 h-4 w-4" />
+                      ))}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort("state")}
+                    className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
+                  >
+                    State
+                    {sortField === "state" &&
+                      (sortDirection === "asc" ? (
+                        <ChevronUp className="ml-1 h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="ml-1 h-4 w-4" />
+                      ))}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort("efficiencyScore")}
+                    className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
+                  >
+                    Efficiency
+                    {sortField === "efficiencyScore" &&
+                      (sortDirection === "asc" ? (
+                        <ChevronUp className="ml-1 h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="ml-1 h-4 w-4" />
+                      ))}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort("wasteLevel")}
+                    className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
+                  >
+                    Waste Alert
+                    {sortField === "wasteLevel" &&
+                      (sortDirection === "asc" ? (
+                        <ChevronUp className="ml-1 h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="ml-1 h-4 w-4" />
+                      ))}
+                  </Button>
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sortedInstances.map((instance) => {
+                const wasteStyling = getWasteLevelStyling(instance.wasteLevel);
 
-              return (
-                <TableRow
-                  key={instance.instanceId}
-                >
-                  {/* Instance Info */}
-                  <TableCell>
-                    <div className="flex flex-col">
-                      <div className="font-medium text-tracer-text-primary">
-                        {instance.name}
+                return (
+                  <TableRow key={instance.instanceId}>
+                    {/* Instance Info */}
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <div className="font-medium text-tracer-text-primary">
+                          {instance.name}
+                        </div>
+                        <div className="text-sm text-tracer-text-secondary">
+                          {instance.instanceType} • {instance.instanceId}
+                        </div>
+                        <div className="text-xs text-tracer-text-muted">
+                          {instance.region}
+                        </div>
                       </div>
-                      <div className="text-sm text-tracer-text-secondary">
-                        {instance.instanceType} • {instance.instanceId}
-                      </div>
-                      <div className="text-xs text-tracer-text-muted">
-                        {instance.region}
-                      </div>
-                    </div>
-                  </TableCell>
+                    </TableCell>
 
-                  {/* CPU Utilization */}
-                  <TableCell>
-                    <div
-                      className={`text-sm font-medium ${getUtilizationStyling(instance.cpuUtilization)}`}
-                    >
-                      {instance.cpuUtilization.toFixed(1)}%
-                    </div>
-                  </TableCell>
-
-                  {/* Memory Utilization */}
-                  <TableCell>
-                    <div
-                      className={`text-sm font-medium ${getUtilizationStyling(instance.memoryUtilization)}`}
-                    >
-                      {instance.memoryUtilization.toFixed(1)}%
-                    </div>
-                  </TableCell>
-
-                  {/* Cost */}
-                  <TableCell>
-                    <div className="text-sm text-tracer-text-primary font-medium">
-                      ${instance.costPerHour.toFixed(4)}
-                    </div>
-                    <div className="text-xs text-tracer-text-secondary">
-                      ${instance.monthlyCost.toFixed(2)}/month
-                    </div>
-                  </TableCell>
-
-                  {/* State */}
-                  <TableCell>
-                    <Badge variant={getStateVariant(instance.state)}>
-                      {instance.state}
-                    </Badge>
-                  </TableCell>
-
-                  {/* Efficiency Score */}
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
+                    {/* CPU Utilization */}
+                    <TableCell>
                       <div
-                        className={`text-sm font-semibold ${wasteStyling.textClass}`}
+                        className={`text-sm font-medium ${getUtilizationStyling(instance.cpuUtilization)}`}
                       >
-                        {instance.efficiencyScore}/100
+                        {instance.cpuUtilization.toFixed(1)}%
                       </div>
-                    </div>
-                  </TableCell>
+                    </TableCell>
 
-                  {/* Waste Alert */}
-                  <TableCell>
-                    <div className="flex items-center space-x-2">
-                      <span className="text-lg">{wasteStyling.icon}</span>
-                      <div>
-                        <Badge variant={getWasteVariant(instance.wasteLevel)}>
-                          {wasteStyling.label}
-                        </Badge>
-                        {instance.wasteLevel === "high" && (
-                          <div className="text-xs text-destructive mt-1">
-                            💰 Potential savings available
-                          </div>
-                        )}
+                    {/* Memory Utilization */}
+                    <TableCell>
+                      <div
+                        className={`text-sm font-medium ${getUtilizationStyling(instance.memoryUtilization)}`}
+                      >
+                        {instance.memoryUtilization.toFixed(1)}%
                       </div>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-        
-        {/* Footer */}
-        <div className="px-6 py-3 bg-secondary border-t border-border text-xs text-muted-foreground">
-          <div className="flex justify-between items-center">
-            <div>
-              Showing {sortedInstances.length} of {data.instances.length}{" "}
-              instances
-            </div>
-            <div>
-              🔴 High Waste:{" "}
-              {sortedInstances.filter((i) => i.wasteLevel === "high").length} • 🟡
-              Medium:{" "}
-              {sortedInstances.filter((i) => i.wasteLevel === "medium").length} •
-              🟢 Efficient:{" "}
-              {sortedInstances.filter((i) => i.wasteLevel === "low").length}
+                    </TableCell>
+
+                    {/* Cost */}
+                    <TableCell>
+                      <div className="text-sm text-tracer-text-primary font-medium">
+                        ${instance.costPerHour.toFixed(4)}
+                      </div>
+                      <div className="text-xs text-tracer-text-secondary">
+                        ${instance.monthlyCost.toFixed(2)}/month
+                      </div>
+                    </TableCell>
+
+                    {/* State */}
+                    <TableCell>
+                      <Badge variant={getStateVariant(instance.state)}>
+                        {instance.state}
+                      </Badge>
+                    </TableCell>
+
+                    {/* Efficiency Score */}
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <div
+                          className={`text-sm font-semibold ${wasteStyling.textClass}`}
+                        >
+                          {instance.efficiencyScore}/100
+                        </div>
+                      </div>
+                    </TableCell>
+
+                    {/* Waste Alert */}
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-lg">{wasteStyling.icon}</span>
+                        <div>
+                          <Badge variant={getWasteVariant(instance.wasteLevel)}>
+                            {wasteStyling.label}
+                          </Badge>
+                          {instance.wasteLevel === "high" && (
+                            <div className="text-xs text-destructive mt-1">
+                              💰 Potential savings available
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+
+          {/* Footer */}
+          <div className="px-6 py-3 bg-secondary border-t border-border text-xs text-muted-foreground">
+            <div className="flex justify-between items-center">
+              <div>
+                Showing {sortedInstances.length} of {data.instances.length}{" "}
+                instances
+              </div>
+              <div>
+                🔴 High Waste:{" "}
+                {sortedInstances.filter((i) => i.wasteLevel === "high").length}{" "}
+                • 🟡 Medium:{" "}
+                {
+                  sortedInstances.filter((i) => i.wasteLevel === "medium")
+                    .length
+                }{" "}
+                • 🟢 Efficient:{" "}
+                {sortedInstances.filter((i) => i.wasteLevel === "low").length}
+              </div>
             </div>
           </div>
-        </div>
         </div>
       </CardContent>
     </Card>

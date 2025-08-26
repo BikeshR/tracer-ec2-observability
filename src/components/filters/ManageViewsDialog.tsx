@@ -1,6 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import { Pencil, Plus, Settings, Trash2, X } from "lucide-react";
+import type React from "react";
+import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -8,6 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -15,14 +20,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Settings, Plus, Pencil, Trash2, X } from "lucide-react";
-import { useFilters } from "./FilterContext";
-import { FILTER_OPTIONS } from "@/types/filters";
 import type { FilterSet } from "@/types/filters";
+import { FILTER_OPTIONS } from "@/types/filters";
+import { useFilters } from "./FilterContext";
 
 interface ManageViewsDialogProps {
   trigger?: React.ReactNode;
@@ -33,7 +34,7 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"create" | "list">("list");
   const [editingView, setEditingView] = useState<FilterSet | null>(null);
-  
+
   // Form state
   const [viewName, setViewName] = useState("");
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
@@ -124,16 +125,15 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || defaultTrigger}
-      </DialogTrigger>
+      <DialogTrigger asChild>{trigger || defaultTrigger}</DialogTrigger>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>
-            {mode === "create" 
-              ? (editingView ? "Edit Filter View" : "Create Filter View")
-              : "Manage Filter Views"
-            }
+            {mode === "create"
+              ? editingView
+                ? "Edit Filter View"
+                : "Create Filter View"
+              : "Manage Filter Views"}
           </DialogTitle>
         </DialogHeader>
 
@@ -170,9 +170,15 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                     <div className="flex items-center space-x-2 mt-1">
                       {view.filters.teams.length > 0 && (
                         <div className="flex items-center space-x-1">
-                          <span className="text-xs text-muted-foreground">Teams:</span>
+                          <span className="text-xs text-muted-foreground">
+                            Teams:
+                          </span>
                           {view.filters.teams.map((team) => (
-                            <Badge key={team} variant="outline" className="text-xs">
+                            <Badge
+                              key={team}
+                              variant="outline"
+                              className="text-xs"
+                            >
                               {team}
                             </Badge>
                           ))}
@@ -180,17 +186,26 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                       )}
                       {view.filters.regions.length > 0 && (
                         <div className="flex items-center space-x-1">
-                          <span className="text-xs text-muted-foreground">Regions:</span>
+                          <span className="text-xs text-muted-foreground">
+                            Regions:
+                          </span>
                           {view.filters.regions.map((region) => (
-                            <Badge key={region} variant="outline" className="text-xs">
+                            <Badge
+                              key={region}
+                              variant="outline"
+                              className="text-xs"
+                            >
                               {region}
                             </Badge>
                           ))}
                         </div>
                       )}
-                      {view.filters.teams.length === 0 && view.filters.regions.length === 0 && (
-                        <span className="text-xs text-muted-foreground">No filters</span>
-                      )}
+                      {view.filters.teams.length === 0 &&
+                        view.filters.regions.length === 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            No filters
+                          </span>
+                        )}
                     </div>
                   </div>
                   <div className="flex items-center space-x-1">
@@ -222,8 +237,11 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
           /* Create/Edit Mode */
           <div className="space-y-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">View Name</label>
+              <label htmlFor="view-name-input" className="text-sm font-medium">
+                View Name
+              </label>
               <Input
+                id="view-name-input"
                 value={viewName}
                 onChange={(e) => setViewName(e.target.value)}
                 placeholder="e.g., Chen Lab Production, Development Team..."
@@ -233,7 +251,7 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">Teams</label>
+                <div className="text-sm font-medium mb-2 block">Teams</div>
                 <div className="space-y-3">
                   <Select onValueChange={addTeam}>
                     <SelectTrigger>
@@ -249,7 +267,7 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                         ))}
                     </SelectContent>
                   </Select>
-                  
+
                   {selectedTeams.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {selectedTeams.map((team) => (
@@ -269,7 +287,7 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-2 block">Regions</label>
+                <div className="text-sm font-medium mb-2 block">Regions</div>
                 <div className="space-y-3">
                   <Select onValueChange={addRegion}>
                     <SelectTrigger>
@@ -285,7 +303,7 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                         ))}
                     </SelectContent>
                   </Select>
-                  
+
                   {selectedRegions.length > 0 && (
                     <div className="flex flex-wrap gap-2">
                       {selectedRegions.map((region) => (
@@ -308,10 +326,7 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
             <Separator />
 
             <div className="flex items-center justify-between">
-              <Button
-                variant="outline"
-                onClick={() => setMode("list")}
-              >
+              <Button variant="outline" onClick={() => setMode("list")}>
                 Back
               </Button>
               <div className="flex space-x-2">
@@ -325,10 +340,7 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                 >
                   Clear
                 </Button>
-                <Button
-                  onClick={handleSaveView}
-                  disabled={!viewName.trim()}
-                >
+                <Button onClick={handleSaveView} disabled={!viewName.trim()}>
                   {editingView ? "Update View" : "Create View"}
                 </Button>
               </div>

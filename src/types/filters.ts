@@ -1,5 +1,5 @@
 // Filter System Types - Component 5 Implementation
-import React from "react";
+import type * as React from "react";
 
 export interface FilterSet {
   id: string;

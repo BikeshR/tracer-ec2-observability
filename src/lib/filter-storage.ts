@@ -1,8 +1,8 @@
 // localStorage persistence utilities for filter system
 import {
-  FilterState,
-  FilterSet,
   DEFAULT_FILTER_SETS,
+  type FilterSet,
+  type FilterState,
   STORAGE_CONFIG,
 } from "@/types/filters";
 
@@ -21,10 +21,10 @@ export const getDefaultFilterState = (): FilterState => ({
 // Save filter state to localStorage
 export const saveFiltersToStorage = (filterState: FilterState): void => {
   // Check if we're on the client side
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return;
   }
-  
+
   try {
     const storageData: StorageData = {
       version: STORAGE_CONFIG.version,
@@ -39,10 +39,10 @@ export const saveFiltersToStorage = (filterState: FilterState): void => {
 // Load filter state from localStorage
 export const loadFiltersFromStorage = (): FilterState => {
   // Check if we're on the client side
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return getDefaultFilterState();
   }
-  
+
   try {
     const stored = localStorage.getItem(STORAGE_CONFIG.key);
     if (!stored) {
@@ -64,17 +64,14 @@ export const loadFiltersFromStorage = (): FilterState => {
 
     // Ensure default filter sets exist (in case user deleted them)
     const storedFilterSets = storageData.filterState.filterSets;
-    const storedIds = new Set(storedFilterSets.map(fs => fs.id));
-    
+    const storedIds = new Set(storedFilterSets.map((fs) => fs.id));
+
     // Only add missing default filter sets
-    const missingDefaults = DEFAULT_FILTER_SETS.filter(defaultFs => 
-      !storedIds.has(defaultFs.id)
+    const missingDefaults = DEFAULT_FILTER_SETS.filter(
+      (defaultFs) => !storedIds.has(defaultFs.id),
     );
-    
-    const mergedFilterSets = [
-      ...storedFilterSets,
-      ...missingDefaults,
-    ];
+
+    const mergedFilterSets = [...storedFilterSets, ...missingDefaults];
 
     return {
       ...storageData.filterState,
@@ -89,10 +86,10 @@ export const loadFiltersFromStorage = (): FilterState => {
 // Clear all filter data from localStorage
 export const clearFilterStorage = (): void => {
   // Check if we're on the client side
-  if (typeof window === 'undefined') {
+  if (typeof window === "undefined") {
     return;
   }
-  
+
   try {
     localStorage.removeItem(STORAGE_CONFIG.key);
   } catch (error) {

@@ -79,6 +79,7 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/* biome-ignore lint/suspicious/noUnknownAtRules: required for theme variables */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -115,6 +116,7 @@
     border-color: hsl(var(--border));
   }
   body {
+    /* biome-ignore lint/suspicious/noUnknownAtRules: required for tailwind directives */
     @apply bg-background text-foreground;
     font-family: system-ui, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
