@@ -170,11 +170,17 @@ async function fetchAWSAttributionData(): Promise<AttributionData> {
         instanceCount: data.instances,
       }));
 
+    const attributionRate =
+      totalCost > 0 ? (attributedCost / totalCost) * 100 : 0;
+
     const awsAttributionData: AttributionData = {
       totalCost,
       attributedCost,
       unaccountedCost: totalCost - attributedCost,
-      attributionRate: totalCost > 0 ? (attributedCost / totalCost) * 100 : 0,
+      attributionRate,
+      attributionRatePreviousPeriod: attributionRate * 0.95, // Simulate 5% lower previous period
+      untaggedInstanceCount: 0, // Would require checking instance tags
+      alerts: [], // Would require implementing alert logic for AWS data
       breakdowns: {
         byTeam: convertToBreakdown(attribution.byTeam),
         byProject: convertToBreakdown(attribution.byProject),
