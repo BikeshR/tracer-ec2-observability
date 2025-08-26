@@ -39,6 +39,8 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
   const [viewName, setViewName] = useState("");
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+  const [teamSelectValue, setTeamSelectValue] = useState("");
+  const [regionSelectValue, setRegionSelectValue] = useState("");
 
   // Reset form when dialog closes
   useEffect(() => {
@@ -48,6 +50,8 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
       setViewName("");
       setSelectedTeams([]);
       setSelectedRegions([]);
+      setTeamSelectValue("");
+      setRegionSelectValue("");
     }
   }, [open]);
 
@@ -56,6 +60,8 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
     setViewName("");
     setSelectedTeams([]);
     setSelectedRegions([]);
+    setTeamSelectValue("");
+    setRegionSelectValue("");
   };
 
   const handleEditView = (view: FilterSet) => {
@@ -64,6 +70,8 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
     setViewName(view.name);
     setSelectedTeams(view.filters.teams);
     setSelectedRegions(view.filters.regions);
+    setTeamSelectValue("");
+    setRegionSelectValue("");
   };
 
   const handleDeleteView = (viewId: string) => {
@@ -93,6 +101,8 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
     setViewName("");
     setSelectedTeams([]);
     setSelectedRegions([]);
+    setTeamSelectValue("");
+    setRegionSelectValue("");
     setEditingView(null);
   };
 
@@ -100,6 +110,7 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
     if (!selectedTeams.includes(team)) {
       setSelectedTeams([...selectedTeams, team]);
     }
+    setTeamSelectValue(""); // Reset the select value
   };
 
   const removeTeam = (team: string) => {
@@ -110,6 +121,7 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
     if (!selectedRegions.includes(region)) {
       setSelectedRegions([...selectedRegions, region]);
     }
+    setRegionSelectValue(""); // Reset the select value
   };
 
   const removeRegion = (region: string) => {
@@ -156,7 +168,7 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
               {filterState.filterSets.map((view) => (
                 <div
                   key={view.id}
-                  className="flex items-center justify-between p-3 rounded-lg border hover:bg-accent/50"
+                  className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
                 >
                   <div className="flex-1">
                     <div className="flex items-center space-x-2">
@@ -177,7 +189,7 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                             <Badge
                               key={team}
                               variant="outline"
-                              className="text-xs"
+                              className="text-xs border-border"
                             >
                               {team}
                             </Badge>
@@ -193,7 +205,7 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                             <Badge
                               key={region}
                               variant="outline"
-                              className="text-xs"
+                              className="text-xs border-border"
                             >
                               {region}
                             </Badge>
@@ -253,7 +265,7 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
               <div>
                 <div className="text-sm font-medium mb-2 block">Teams</div>
                 <div className="space-y-3">
-                  <Select onValueChange={addTeam}>
+                  <Select value={teamSelectValue} onValueChange={addTeam}>
                     <SelectTrigger>
                       <SelectValue placeholder="Add a team..." />
                     </SelectTrigger>
@@ -289,7 +301,7 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
               <div>
                 <div className="text-sm font-medium mb-2 block">Regions</div>
                 <div className="space-y-3">
-                  <Select onValueChange={addRegion}>
+                  <Select value={regionSelectValue} onValueChange={addRegion}>
                     <SelectTrigger>
                       <SelectValue placeholder="Add a region..." />
                     </SelectTrigger>
@@ -336,6 +348,8 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                     setViewName("");
                     setSelectedTeams([]);
                     setSelectedRegions([]);
+                    setTeamSelectValue("");
+                    setRegionSelectValue("");
                   }}
                 >
                   Clear

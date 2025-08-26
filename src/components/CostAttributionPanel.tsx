@@ -1,6 +1,7 @@
 "use client";
 
-import { BarChart3, DollarSign, Info, Table } from "lucide-react";
+import { BarChart3, DollarSign, Table } from "lucide-react";
+import { useEffect, useState } from "react";
 import {
   Cell,
   Legend,
@@ -9,10 +10,8 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -121,12 +120,13 @@ export default function CostAttributionPanel({
   const getBreakdownData = () => {
     if (!data) return [];
     const breakdownData = data.attribution.breakdowns[selectedBreakdown] || [];
-    
+
     // Add unattributed cost as a separate entry
     const unattributedEntry = {
       category: "Unattributed",
       cost: data.attribution.unaccountedCost,
-      percentage: (data.attribution.unaccountedCost / data.attribution.totalCost) * 100,
+      percentage:
+        (data.attribution.unaccountedCost / data.attribution.totalCost) * 100,
       instanceCount: 0, // Unknown for unattributed
     };
 
@@ -223,7 +223,7 @@ export default function CostAttributionPanel({
             <span>Team Funding Overview</span>
           </CardTitle>
         </CardHeader>
-        <CardContent className="flex-1 space-y-4">
+        <CardContent className="flex-1 space-y-4 pb-6">
           {/* Attribution Summary */}
           <div className="grid grid-cols-2 gap-4 text-center">
             <div>
@@ -245,34 +245,36 @@ export default function CostAttributionPanel({
             <div className="text-sm font-medium text-muted-foreground">
               Active Grants
             </div>
-            {mockResearchAttribution.grantBreakdown.map((grant) => (
-              <div
-                key={grant.grantId}
-                className="flex items-center justify-between p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="secondary" className="text-xs">
-                      {grant.grantId}
-                    </Badge>
-                    <span className="text-sm font-medium">
-                      {grant.grantName}
-                    </span>
+            <div className="max-h-80 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
+              {mockResearchAttribution.grantBreakdown.map((grant) => (
+                <div
+                  key={grant.grantId}
+                  className="flex items-center justify-between p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {grant.grantId}
+                      </Badge>
+                      <span className="text-sm font-medium">
+                        {grant.grantName}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      PI: {grant.piName}
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    PI: {grant.piName}
-                  </p>
+                  <div className="text-right">
+                    <div className="text-sm font-semibold">
+                      {formatCurrency(grant.allocatedCost)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {grant.percentage.toFixed(1)}%
+                    </div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <div className="text-sm font-semibold">
-                    {formatCurrency(grant.allocatedCost)}
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {grant.percentage.toFixed(1)}%
-                  </div>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -328,14 +330,14 @@ export default function CostAttributionPanel({
           </div>
         </CardHeader>
 
-        <CardContent className="flex-1">
+        <CardContent className="flex-1 pb-6">
           {viewMode === "table" ? (
-            <div className="space-y-3">
+            <div className="max-h-80 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
               {breakdownData.length > 0 ? (
                 breakdownData.map((item) => (
                   <div
                     key={item.category}
-                    className="flex items-center justify-between p-4 bg-secondary rounded-lg hover:bg-accent/30 transition-colors"
+                    className="flex items-center justify-between p-4 bg-secondary rounded-lg hover:bg-accent/30 transition-colors mb-3 last:mb-0"
                   >
                     <div className="flex items-center space-x-4">
                       <div
@@ -347,10 +349,9 @@ export default function CostAttributionPanel({
                       <div>
                         <p className="text-sm font-medium">{item.category}</p>
                         <p className="text-xs text-muted-foreground">
-                          {item.category === "Unattributed" 
+                          {item.category === "Unattributed"
                             ? "Unknown instances"
-                            : `${item.instanceCount} instance${item.instanceCount !== 1 ? "s" : ""}`
-                          }
+                            : `${item.instanceCount} instance${item.instanceCount !== 1 ? "s" : ""}`}
                         </p>
                       </div>
                     </div>
@@ -373,7 +374,7 @@ export default function CostAttributionPanel({
               )}
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="h-80 space-y-6">
               {/* Pie Chart */}
               <div className="h-80">
                 {pieChartData.length > 0 ? (
@@ -388,8 +389,8 @@ export default function CostAttributionPanel({
                         paddingAngle={2}
                         dataKey="value"
                       >
-                        {pieChartData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        {pieChartData.map((entry) => (
+                          <Cell key={entry.category} fill={entry.color} />
                         ))}
                       </Pie>
                       <Tooltip
@@ -408,7 +409,16 @@ export default function CostAttributionPanel({
                       <Legend
                         formatter={(value, entry) => (
                           <span className="text-sm text-foreground">
-                            {value} ({((entry.payload?.value || 0) / pieChartData.reduce((sum, item) => sum + item.value, 0) * 100).toFixed(1)}%)
+                            {value} (
+                            {(
+                              ((entry.payload?.value || 0) /
+                                pieChartData.reduce(
+                                  (sum, item) => sum + item.value,
+                                  0,
+                                )) *
+                              100
+                            ).toFixed(1)}
+                            %)
                           </span>
                         )}
                         wrapperStyle={{

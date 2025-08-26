@@ -1,10 +1,23 @@
 "use client";
 
-import { ChevronDown, ChevronUp, Server } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
+  Server,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -40,6 +53,15 @@ export default function EC2Table() {
   const [error, setError] = useState<string | null>(null);
   const [sortField, setSortField] = useState<SortField>("efficiencyScore");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(() => {
+    // Load from localStorage or default to 25
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("ec2-table-page-size");
+      return saved ? parseInt(saved, 10) : 25;
+    }
+    return 25;
+  });
 
   // Fetch EC2 data
   useEffect(() => {
@@ -106,6 +128,30 @@ export default function EC2Table() {
           return 0;
         })
       : [];
+
+  // Pagination calculations
+  const totalItems = sortedInstances.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+  const paginatedInstances = sortedInstances.slice(startIndex, endIndex);
+
+  // Reset to first page when filtering/sorting/page size changes
+  useEffect(() => {
+    if (filteredInstances.length || sortField || sortDirection || itemsPerPage)
+      setCurrentPage(1);
+  }, [filteredInstances.length, sortField, sortDirection, itemsPerPage]);
+
+  // Handle page size change
+  const handlePageSizeChange = (newSize: string) => {
+    const size = parseInt(newSize, 10);
+    setItemsPerPage(size);
+    setCurrentPage(1); // Reset to first page
+    // Save to localStorage
+    if (typeof window !== "undefined") {
+      localStorage.setItem("ec2-table-page-size", newSize);
+    }
+  };
 
   // Handle column header clicks for sorting
   const handleSort = (field: SortField) => {
@@ -384,7 +430,7 @@ export default function EC2Table() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sortedInstances.map((instance) => {
+              {paginatedInstances.map((instance) => {
                 const wasteStyling = getWasteLevelStyling(instance.wasteLevel);
 
                 return (
@@ -472,12 +518,97 @@ export default function EC2Table() {
             </TableBody>
           </Table>
 
-          {/* Footer */}
+          {/* Pagination Controls */}
+          <div className="px-6 py-3 border-t border-border bg-secondary/50">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="text-xs text-muted-foreground">
+                  Showing {startIndex + 1}-{endIndex} of {totalItems} instances
+                </div>
+                {/* Page Size Selector */}
+                <div className="flex items-center space-x-2">
+                  <span className="text-xs text-muted-foreground">Show:</span>
+                  <Select
+                    value={itemsPerPage.toString()}
+                    onValueChange={handlePageSizeChange}
+                  >
+                    <SelectTrigger className="h-7 w-16 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="25">25</SelectItem>
+                      <SelectItem value="50">50</SelectItem>
+                      <SelectItem value="100">100</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {totalPages > 1 && (
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(1, prev - 1))
+                    }
+                    disabled={currentPage === 1}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </Button>
+
+                  <div className="flex items-center space-x-1">
+                    {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                      const pageNumber =
+                        currentPage <= 3
+                          ? i + 1
+                          : currentPage >= totalPages - 2
+                            ? totalPages - 4 + i
+                            : currentPage - 2 + i;
+
+                      if (pageNumber > 0 && pageNumber <= totalPages) {
+                        return (
+                          <Button
+                            key={pageNumber}
+                            variant={
+                              pageNumber === currentPage ? "default" : "outline"
+                            }
+                            size="sm"
+                            onClick={() => setCurrentPage(pageNumber)}
+                            className="h-8 w-8 p-0 text-xs"
+                          >
+                            {pageNumber}
+                          </Button>
+                        );
+                      }
+                      return null;
+                    })}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(totalPages, prev + 1))
+                    }
+                    disabled={currentPage === totalPages}
+                    className="h-8 w-8 p-0"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer with Stats */}
           <div className="px-6 py-3 bg-secondary border-t border-border text-xs text-muted-foreground">
             <div className="flex justify-between items-center">
               <div>
-                Showing {sortedInstances.length} of {data.instances.length}{" "}
-                instances
+                Total: {data.instances.length} instances (
+                {sortedInstances.filter((i) => i.state === "running").length}{" "}
+                running)
               </div>
               <div>
                 🔴 High Waste:{" "}
