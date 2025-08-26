@@ -2,6 +2,19 @@
 
 import { useEffect, useState } from "react";
 import type { EC2Instance } from "@/lib/mock-data";
+import { useFilteredData } from "@/hooks/useFilteredData";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ChevronUp, ChevronDown, Server } from "lucide-react";
 
 interface ApiResponse {
   instances: EC2Instance[];
@@ -14,7 +27,9 @@ type SortField =
   | "name"
   | "instanceType"
   | "cpuUtilization"
+  | "memoryUtilization"
   | "costPerHour"
+  | "state"
   | "efficiencyScore"
   | "wasteLevel";
 type SortDirection = "asc" | "desc";
@@ -53,30 +68,46 @@ export default function EC2Table() {
     fetchInstances();
   }, []);
 
-  // Sort instances
-  const sortedInstances = data?.instances
-    ? [...data.instances].sort((a, b) => {
-        let aValue: string | number = a[sortField];
-        let bValue: string | number = b[sortField];
+  // Transform instances for filtering (map tags.Team to team field)
+  const instancesForFiltering =
+    data?.instances?.map((instance) => ({
+      ...instance,
+      team: instance.tags?.Team,
+      region: instance.region,
+    })) || [];
 
-        // Handle waste level sorting
-        if (sortField === "wasteLevel") {
-          const wasteOrder = { high: 3, medium: 2, low: 1 };
-          aValue = wasteOrder[a.wasteLevel];
-          bValue = wasteOrder[b.wasteLevel];
-        }
+  // Apply filters
+  const {
+    filteredData: filteredInstances,
+    totalCount,
+    filteredCount,
+  } = useFilteredData(instancesForFiltering);
 
-        // Handle string vs number comparison
-        if (typeof aValue === "string") {
-          aValue = aValue.toLowerCase();
-          bValue = (bValue as string).toLowerCase();
-        }
+  // Sort filtered instances
+  const sortedInstances =
+    filteredInstances.length > 0
+      ? [...filteredInstances].sort((a, b) => {
+          let aValue: string | number = a[sortField];
+          let bValue: string | number = b[sortField];
 
-        if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
-        if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-        return 0;
-      })
-    : [];
+          // Handle waste level sorting
+          if (sortField === "wasteLevel") {
+            const wasteOrder = { high: 3, medium: 2, low: 1 };
+            aValue = wasteOrder[a.wasteLevel];
+            bValue = wasteOrder[b.wasteLevel];
+          }
+
+          // Handle string vs number comparison
+          if (typeof aValue === "string") {
+            aValue = aValue.toLowerCase();
+            bValue = (bValue as string).toLowerCase();
+          }
+
+          if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+          if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+          return 0;
+        })
+      : [];
 
   // Handle column header clicks for sorting
   const handleSort = (field: SortField) => {
@@ -96,28 +127,28 @@ export default function EC2Table() {
     switch (wasteLevel) {
       case "high":
         return {
-          bgClass: "bg-tracer-danger/10",
-          textClass: "text-tracer-danger",
+          bgClass: "bg-destructive/10",
+          textClass: "text-destructive",
           badgeClass:
-            "bg-tracer-danger/10 text-tracer-danger border border-tracer-danger/20",
+            "bg-destructive/10 text-destructive border border-destructive/20",
           icon: "🔴",
           label: "High Waste",
         };
       case "medium":
         return {
-          bgClass: "bg-tracer-warning/10",
-          textClass: "text-tracer-warning",
+          bgClass: "bg-warning/10",
+          textClass: "text-warning",
           badgeClass:
-            "bg-tracer-warning/10 text-tracer-warning border border-tracer-warning/20",
+            "bg-warning/10 text-warning border border-warning/20",
           icon: "🟡",
           label: "Medium Waste",
         };
       case "low":
         return {
-          bgClass: "bg-tracer-success/10",
-          textClass: "text-tracer-success",
+          bgClass: "bg-emerald-500/10",
+          textClass: "text-emerald-500",
           badgeClass:
-            "bg-tracer-success/10 text-tracer-success border border-tracer-success/20",
+            "bg-emerald-500/10 text-emerald-500 border border-tracer-success/20",
           icon: "🟢",
           label: "Efficient",
         };
@@ -126,187 +157,242 @@ export default function EC2Table() {
 
   // Get utilization styling
   const getUtilizationStyling = (utilization: number) => {
-    if (utilization < 20) return "text-tracer-danger font-semibold";
-    if (utilization < 60) return "text-tracer-warning font-medium";
-    return "text-tracer-success font-semibold";
+    if (utilization < 20) return "text-destructive font-semibold";
+    if (utilization < 60) return "text-warning font-medium";
+    return "text-emerald-500 font-semibold";
   };
 
-  // Get state styling
-  const getStateStyling = (state: string) => {
+  // Legacy state styling function - kept for potential custom styling needs
+  // const getStateStyling = (state: string) => {
+  //   switch (state.toLowerCase()) {
+  //     case "running":
+  //       return "bg-emerald-500/10 text-emerald-500 border border-tracer-success/20";
+  //     case "stopped":
+  //       return "bg-tracer-bg-tertiary text-tracer-text-secondary border border-tracer-border";
+  //     case "pending":
+  //       return "bg-tracer-info/10 text-tracer-info border border-tracer-info/20";
+  //     case "shutting-down":
+  //     case "stopping":
+  //       return "bg-yellow-500/10 text-yellow-500 border border-tracer-warning/20";
+  //     case "terminated":
+  //       return "bg-red-500/10 text-red-500 border border-red-500/20";
+  //     default:
+  //       return "bg-tracer-bg-tertiary text-tracer-text-muted border border-tracer-border";
+  //   }
+  // };
+
+  // Get Badge variant for instance state
+  const getStateVariant = (state: string): "default" | "secondary" | "destructive" | "outline" => {
     switch (state.toLowerCase()) {
       case "running":
-        return "bg-tracer-success/10 text-tracer-success border border-tracer-success/20";
+        return "default";
       case "stopped":
-        return "bg-tracer-bg-tertiary text-tracer-text-secondary border border-tracer-border";
-      case "pending":
-        return "bg-tracer-info/10 text-tracer-info border border-tracer-info/20";
-      case "shutting-down":
-      case "stopping":
-        return "bg-tracer-warning/10 text-tracer-warning border border-tracer-warning/20";
+        return "secondary";
       case "terminated":
-        return "bg-tracer-danger/10 text-tracer-danger border border-tracer-danger/20";
+        return "destructive";
       default:
-        return "bg-tracer-bg-tertiary text-tracer-text-muted border border-tracer-border";
+        return "outline";
+    }
+  };
+
+  // Get Badge variant for waste level
+  const getWasteVariant = (wasteLevel: string): "default" | "secondary" | "destructive" | "outline" => {
+    switch (wasteLevel) {
+      case "high":
+        return "destructive";
+      case "medium":
+        return "outline";
+      case "low":
+        return "default";
+      default:
+        return "secondary";
     }
   };
 
   // Loading state
   if (loading) {
     return (
-      <div className="bg-tracer-bg-secondary rounded-lg border border-tracer-border p-8">
+      <Card className="p-8">
         <div className="animate-pulse space-y-4">
-          <div className="h-8 bg-tracer-bg-tertiary rounded w-64"></div>
+          <div className="h-8 bg-muted rounded w-64"></div>
           <div className="space-y-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-12 bg-tracer-bg-primary rounded"></div>
+              <div key={i} className="h-12 bg-secondary rounded"></div>
             ))}
           </div>
         </div>
-        <p className="text-center text-tracer-text-secondary mt-4">
+        <p className="text-center text-muted-foreground mt-4">
           Loading EC2 instances...
         </p>
-      </div>
+      </Card>
     );
   }
 
-  // Error state
+  // Error state - use danger surface for error indication
   if (error) {
     return (
-      <div className="bg-tracer-bg-secondary rounded-lg border border-tracer-border p-8">
-        <div className="text-center">
-          <div className="text-tracer-danger text-6xl mb-4">⚠️</div>
-          <h3 className="text-lg font-semibold text-tracer-text-primary mb-2">
-            Failed to Load EC2 Data
-          </h3>
-          <p className="text-tracer-text-secondary mb-4">{error}</p>
-          <button
-            type="button"
-            onClick={() => window.location.reload()}
-            className="bg-tracer-info text-white px-4 py-2 rounded-md hover:bg-tracer-active transition-colors"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
+      <Card className="p-8 text-center">
+        <div className="text-destructive text-6xl mb-4">⚠️</div>
+        <h3 className="text-lg font-semibold text-foreground mb-2">
+          Failed to Load EC2 Data
+        </h3>
+        <p className="text-muted-foreground mb-4">{error}</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+        >
+          Retry
+        </button>
+      </Card>
     );
   }
 
-  // No data state
+  // No data state - use neutral elevated surface
   if (!data || !data.instances || data.instances.length === 0) {
     return (
-      <div className="bg-tracer-bg-secondary rounded-lg border border-tracer-border p-8">
-        <div className="text-center">
-          <div className="text-tracer-text-muted text-6xl mb-4">📊</div>
-          <h3 className="text-lg font-semibold text-tracer-text-primary mb-2">
-            No EC2 Instances Found
-          </h3>
-          <p className="text-tracer-text-secondary">
-            {data?.source === "aws"
-              ? "No EC2 instances found in your AWS account."
-              : "No instance data available."}
-          </p>
-        </div>
-      </div>
+      <Card className="p-8 text-center">
+        <div className="text-muted-foreground text-6xl mb-4">📊</div>
+        <h3 className="text-lg font-semibold text-foreground mb-2">
+          No EC2 Instances Found
+        </h3>
+        <p className="text-muted-foreground">
+          {data?.source === "aws"
+            ? "No EC2 instances found in your AWS account."
+            : "No instance data available."}
+        </p>
+      </Card>
     );
   }
 
   return (
-    <div className="bg-tracer-bg-secondary rounded-lg border border-tracer-border">
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-tracer-border">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-tracer-text-primary">
-              EC2 Instance Utilization
-            </h2>
-            <p className="text-sm text-tracer-text-secondary mt-1">
-              {data.instances.length} instance
-              {data.instances.length !== 1 ? "s" : ""} found
-              <span className="ml-2 px-2 py-1 text-xs rounded-full bg-tracer-bg-tertiary text-tracer-text-secondary border border-tracer-border">
-                {data.source === "aws" ? "🔗 Live AWS Data" : "🔧 Mock Data"}
-              </span>
-            </p>
-          </div>
-          <div className="text-sm text-tracer-text-muted">
-            Last updated: {new Date(data.timestamp).toLocaleTimeString()}
-          </div>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-tracer-bg-tertiary">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-tracer-text-muted uppercase tracking-wider">
-                <button
-                  type="button"
+    <Card className="mb-8 pb-0">
+      <CardHeader>
+        <CardTitle className="flex items-center space-x-2">
+          <Server className="h-5 w-5 text-muted-foreground" />
+          <span>EC2 Instances</span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+              <TableHead className="w-[200px]">
+                <Button
+                  variant="ghost"
                   onClick={() => handleSort("name")}
-                  className="flex items-center space-x-1 hover:text-tracer-text-secondary transition-colors"
+                  className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
                 >
-                  <span>Instance</span>
+                  Instance
                   {sortField === "name" && (
-                    <span>{sortDirection === "asc" ? "↑" : "↓"}</span>
+                    sortDirection === "asc" ? (
+                      <ChevronUp className="ml-1 h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="ml-1 h-4 w-4" />
+                    )
                   )}
-                </button>
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-tracer-text-muted uppercase tracking-wider">
-                <button
-                  type="button"
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
                   onClick={() => handleSort("cpuUtilization")}
-                  className="flex items-center space-x-1 hover:text-tracer-text-secondary transition-colors"
+                  className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
                 >
-                  <span>CPU Usage</span>
+                  CPU Usage
                   {sortField === "cpuUtilization" && (
-                    <span>{sortDirection === "asc" ? "↑" : "↓"}</span>
+                    sortDirection === "asc" ? (
+                      <ChevronUp className="ml-1 h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="ml-1 h-4 w-4" />
+                    )
                   )}
-                </button>
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-tracer-text-muted uppercase tracking-wider">
-                Memory %
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-tracer-text-muted uppercase tracking-wider">
-                <button
-                  type="button"
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort("memoryUtilization")}
+                  className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
+                >
+                  Memory %
+                  {sortField === "memoryUtilization" && (
+                    sortDirection === "asc" ? (
+                      <ChevronUp className="ml-1 h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="ml-1 h-4 w-4" />
+                    )
+                  )}
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
                   onClick={() => handleSort("costPerHour")}
-                  className="flex items-center space-x-1 hover:text-tracer-text-secondary transition-colors"
+                  className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
                 >
-                  <span>Cost/Hour</span>
+                  Cost/Hour
                   {sortField === "costPerHour" && (
-                    <span>{sortDirection === "asc" ? "↑" : "↓"}</span>
+                    sortDirection === "asc" ? (
+                      <ChevronUp className="ml-1 h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="ml-1 h-4 w-4" />
+                    )
                   )}
-                </button>
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-tracer-text-muted uppercase tracking-wider">
-                State
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-tracer-text-muted uppercase tracking-wider">
-                <button
-                  type="button"
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
+                  onClick={() => handleSort("state")}
+                  className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
+                >
+                  State
+                  {sortField === "state" && (
+                    sortDirection === "asc" ? (
+                      <ChevronUp className="ml-1 h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="ml-1 h-4 w-4" />
+                    )
+                  )}
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
                   onClick={() => handleSort("efficiencyScore")}
-                  className="flex items-center space-x-1 hover:text-tracer-text-secondary transition-colors"
+                  className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
                 >
-                  <span>Efficiency</span>
+                  Efficiency
                   {sortField === "efficiencyScore" && (
-                    <span>{sortDirection === "asc" ? "↑" : "↓"}</span>
+                    sortDirection === "asc" ? (
+                      <ChevronUp className="ml-1 h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="ml-1 h-4 w-4" />
+                    )
                   )}
-                </button>
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-tracer-text-muted uppercase tracking-wider">
-                <button
-                  type="button"
+                </Button>
+              </TableHead>
+              <TableHead>
+                <Button
+                  variant="ghost"
                   onClick={() => handleSort("wasteLevel")}
-                  className="flex items-center space-x-1 hover:text-tracer-text-secondary transition-colors"
+                  className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
                 >
-                  <span>Waste Alert</span>
+                  Waste Alert
                   {sortField === "wasteLevel" && (
-                    <span>{sortDirection === "asc" ? "↑" : "↓"}</span>
+                    sortDirection === "asc" ? (
+                      <ChevronUp className="ml-1 h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="ml-1 h-4 w-4" />
+                    )
                   )}
-                </button>
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-tracer-border">
+                </Button>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {sortedInstances.map((instance) => {
               const wasteStyling = getWasteLevelStyling(
                 instance.wasteLevel,
@@ -314,12 +400,11 @@ export default function EC2Table() {
               );
 
               return (
-                <tr
+                <TableRow
                   key={instance.instanceId}
-                  className={`hover:bg-tracer-hover ${wasteStyling.bgClass}`}
                 >
                   {/* Instance Info */}
-                  <td className="px-6 py-4">
+                  <TableCell>
                     <div className="flex flex-col">
                       <div className="font-medium text-tracer-text-primary">
                         {instance.name}
@@ -331,47 +416,45 @@ export default function EC2Table() {
                         {instance.region}
                       </div>
                     </div>
-                  </td>
+                  </TableCell>
 
                   {/* CPU Utilization */}
-                  <td className="px-6 py-4">
+                  <TableCell>
                     <div
                       className={`text-sm font-medium ${getUtilizationStyling(instance.cpuUtilization)}`}
                     >
                       {instance.cpuUtilization.toFixed(1)}%
                     </div>
-                  </td>
+                  </TableCell>
 
                   {/* Memory Utilization */}
-                  <td className="px-6 py-4">
+                  <TableCell>
                     <div
                       className={`text-sm font-medium ${getUtilizationStyling(instance.memoryUtilization)}`}
                     >
                       {instance.memoryUtilization.toFixed(1)}%
                     </div>
-                  </td>
+                  </TableCell>
 
                   {/* Cost */}
-                  <td className="px-6 py-4">
+                  <TableCell>
                     <div className="text-sm text-tracer-text-primary font-medium">
                       ${instance.costPerHour.toFixed(4)}
                     </div>
                     <div className="text-xs text-tracer-text-secondary">
                       ${instance.monthlyCost.toFixed(2)}/month
                     </div>
-                  </td>
+                  </TableCell>
 
                   {/* State */}
-                  <td className="px-6 py-4">
-                    <span
-                      className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStateStyling(instance.state)}`}
-                    >
+                  <TableCell>
+                    <Badge variant={getStateVariant(instance.state)}>
                       {instance.state}
-                    </span>
-                  </td>
+                    </Badge>
+                  </TableCell>
 
                   {/* Efficiency Score */}
-                  <td className="px-6 py-4">
+                  <TableCell>
                     <div className="flex items-center space-x-2">
                       <div
                         className={`text-sm font-semibold ${wasteStyling.textClass}`}
@@ -379,50 +462,49 @@ export default function EC2Table() {
                         {instance.efficiencyScore}/100
                       </div>
                     </div>
-                  </td>
+                  </TableCell>
 
                   {/* Waste Alert */}
-                  <td className="px-6 py-4">
+                  <TableCell>
                     <div className="flex items-center space-x-2">
                       <span className="text-lg">{wasteStyling.icon}</span>
                       <div>
-                        <div
-                          className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${wasteStyling.badgeClass}`}
-                        >
+                        <Badge variant={getWasteVariant(instance.wasteLevel)}>
                           {wasteStyling.label}
-                        </div>
+                        </Badge>
                         {instance.wasteLevel === "high" && (
-                          <div className="text-xs text-tracer-danger mt-1">
+                          <div className="text-xs text-destructive mt-1">
                             💰 Potential savings available
                           </div>
                         )}
                       </div>
                     </div>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Footer */}
-      <div className="px-6 py-3 bg-tracer-bg-tertiary border-t border-tracer-border text-xs text-tracer-text-muted">
-        <div className="flex justify-between items-center">
-          <div>
-            Showing {sortedInstances.length} of {data.instances.length}{" "}
-            instances
-          </div>
-          <div>
-            🔴 High Waste:{" "}
-            {sortedInstances.filter((i) => i.wasteLevel === "high").length} • 🟡
-            Medium:{" "}
-            {sortedInstances.filter((i) => i.wasteLevel === "medium").length} •
-            🟢 Efficient:{" "}
-            {sortedInstances.filter((i) => i.wasteLevel === "low").length}
+          </TableBody>
+        </Table>
+        
+        {/* Footer */}
+        <div className="px-6 py-3 bg-secondary border-t border-border text-xs text-muted-foreground">
+          <div className="flex justify-between items-center">
+            <div>
+              Showing {sortedInstances.length} of {data.instances.length}{" "}
+              instances
+            </div>
+            <div>
+              🔴 High Waste:{" "}
+              {sortedInstances.filter((i) => i.wasteLevel === "high").length} • 🟡
+              Medium:{" "}
+              {sortedInstances.filter((i) => i.wasteLevel === "medium").length} •
+              🟢 Efficient:{" "}
+              {sortedInstances.filter((i) => i.wasteLevel === "low").length}
+            </div>
           </div>
         </div>
-      </div>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }

@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { type CostData, mockCostData } from "@/lib/mock-data";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { DollarSign, TrendingUp, BarChart3, PiggyBank, TrendingDown, Lightbulb } from "lucide-react";
 
 interface ApiResponse {
   costs: CostData;
@@ -75,21 +78,23 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
   // Loading state
   if (loading) {
     return (
-      <div
-        className={`bg-tracer-bg-secondary rounded-lg border border-tracer-border ${className}`}
-      >
-        <div className="p-6">
-          <div className="animate-pulse space-y-4">
-            <div className="h-6 bg-tracer-bg-tertiary rounded w-48"></div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[1, 2, 3, 4].map((i) => (
-                <div
-                  key={i}
-                  className="h-24 bg-tracer-bg-primary rounded"
-                ></div>
-              ))}
-            </div>
-          </div>
+      <div className={`space-y-6 mb-8 ${className}`}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardHeader className="pb-2">
+                <Skeleton className="h-4 w-20" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-24" />
+                <Skeleton className="h-3 w-16 mt-2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Skeleton className="h-64" />
+          <Skeleton className="h-64" />
         </div>
       </div>
     );
@@ -97,17 +102,17 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
 
   if (!data) {
     return (
-      <div
-        className={`bg-tracer-bg-secondary rounded-lg border border-tracer-border p-8 text-center ${className}`}
-      >
-        <div className="text-tracer-text-muted text-4xl mb-4">⚠️</div>
-        <h3 className="text-lg font-semibold text-tracer-text-primary mb-2">
-          Cost Data Unavailable
-        </h3>
-        <p className="text-tracer-text-secondary">
-          Unable to load cost overview data.
-        </p>
-      </div>
+      <Card className={`p-8 text-center mb-8 ${className}`}>
+        <CardContent>
+          <div className="text-muted-foreground text-4xl mb-4">⚠️</div>
+          <h3 className="text-lg font-semibold text-foreground mb-2">
+            Cost Data Unavailable
+          </h3>
+          <p className="text-muted-foreground">
+            Unable to load cost overview data.
+          </p>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -119,249 +124,194 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
     100;
 
   return (
-    <div
-      className={`bg-tracer-bg-secondary rounded-lg border border-tracer-border ${className}`}
-    >
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-tracer-border">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-tracer-text-primary">
-              Cost Overview
-            </h2>
-            <p className="text-sm text-tracer-text-secondary mt-1">
-              AWS infrastructure cost insights and optimization opportunities
-              <span className="ml-2 px-2 py-1 text-xs rounded-full bg-tracer-bg-tertiary text-tracer-text-secondary border border-tracer-border">
-                {data.source === "aws"
-                  ? "💰 Live AWS Billing"
-                  : data.source === "mock-fallback"
-                    ? "⚠️ Fallback Data"
-                    : "🔧 Mock Data"}
-              </span>
+    <div className={`space-y-6 mb-8 ${className}`}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Current Monthly Cost */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Monthly Cost
+            </CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {formatCurrency(costData.totalMonthlyCost)}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Daily Burn Rate */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Daily Burn
+            </CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {formatCurrency(costData.dailyBurnRate)}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Projected Monthly Cost */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Projected
+            </CardTitle>
+            <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {formatCurrency(costData.projectedMonthlyCost)}
+            </div>
+            <div className="flex items-center text-xs text-muted-foreground">
+              {costChangePercent > 0 ? (
+                <TrendingUp className="mr-1 h-3 w-3 text-destructive" />
+              ) : (
+                <TrendingDown className="mr-1 h-3 w-3 text-success" />
+              )}
+              {Math.abs(costChangePercent).toFixed(1)}% from current
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Potential Savings */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Potential Savings
+            </CardTitle>
+            <PiggyBank className="h-4 w-4 text-success" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-success">
+              {formatCurrency(savingsOpportunity)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              ~30% optimization
             </p>
-          </div>
-          <div className="text-sm text-tracer-text-muted">
-            Last updated: {new Date(data.timestamp).toLocaleTimeString()}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Cost Metrics Grid */}
-      <div className="p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-          {/* Current Monthly Cost */}
-          <div className="bg-tracer-bg-tertiary rounded-lg border border-tracer-border p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-tracer-text-secondary">
-                  Monthly Cost
-                </p>
-                <p className="text-2xl font-bold text-tracer-text-primary mt-1">
-                  {formatCurrency(costData.totalMonthlyCost)}
-                </p>
-              </div>
-              <div className="w-10 h-10 bg-tracer-info/20 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-tracer-info"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <title>Monthly Cost Icon</title>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* Daily Burn Rate */}
-          <div className="bg-tracer-bg-tertiary rounded-lg border border-tracer-border p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-tracer-text-secondary">
-                  Daily Burn
-                </p>
-                <p className="text-2xl font-bold text-tracer-text-primary mt-1">
-                  {formatCurrency(costData.dailyBurnRate)}
-                </p>
-              </div>
-              <div className="w-10 h-10 bg-tracer-warning/20 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-tracer-warning"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <title>Daily Burn Rate Icon</title>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          {/* Projected Monthly Cost */}
-          <div className="bg-tracer-bg-tertiary rounded-lg border border-tracer-border p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-tracer-text-secondary">
-                  Projected
-                </p>
-                <p className="text-2xl font-bold text-tracer-text-primary mt-1">
-                  {formatCurrency(costData.projectedMonthlyCost)}
-                </p>
-                <div className="flex items-center mt-1">
-                  <span
-                    className={`text-xs font-medium ${costChangePercent > 0 ? "text-tracer-danger" : "text-tracer-success"}`}
-                  >
-                    {costChangePercent > 0 ? "↗" : "↘"}{" "}
-                    {Math.abs(costChangePercent).toFixed(1)}%
-                  </span>
+      {/* Cost Breakdown Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Cost by Environment */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Cost by Environment</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {costData.costByEnvironment.map((item) => (
+              <div
+                key={item.environment}
+                className="flex items-center justify-between"
+              >
+                <div className="flex items-center space-x-3">
+                  <div
+                    className={`w-3 h-3 rounded-full ${
+                      item.environment === "Production"
+                        ? "bg-destructive"
+                        : item.environment === "Development"
+                          ? "bg-warning"
+                          : "bg-chart-1"
+                    }`}
+                  ></div>
+                  <span className="text-sm font-medium">{item.environment}</span>
                 </div>
+                <span className="text-sm font-semibold">{formatCurrency(item.cost)}</span>
               </div>
-              <div className="w-10 h-10 bg-tracer-success/20 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-tracer-success"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <title>Projected Cost Icon</title>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
+            ))}
+          </CardContent>
+        </Card>
 
-          {/* Savings Opportunity */}
-          <div className="bg-tracer-bg-tertiary rounded-lg border border-tracer-border p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-tracer-text-secondary">
-                  Potential Savings
-                </p>
-                <p className="text-2xl font-bold text-tracer-success mt-1">
-                  {formatCurrency(savingsOpportunity)}
-                </p>
-                <div className="flex items-center mt-1">
-                  <span className="text-xs font-medium text-tracer-text-muted">
-                    ~30% optimization
-                  </span>
-                </div>
-              </div>
-              <div className="w-10 h-10 bg-tracer-success/20 rounded-lg flex items-center justify-center">
-                <svg
-                  className="w-5 h-5 text-tracer-success"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <title>Potential Savings Icon</title>
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                  />
-                </svg>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Cost Breakdown Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Cost by Environment */}
-          <div className="bg-tracer-bg-tertiary rounded-lg border border-tracer-border p-4">
-            <h3 className="text-lg font-semibold text-tracer-text-primary mb-4">
-              Cost by Environment
-            </h3>
-            <div className="space-y-3">
-              {costData.costByEnvironment.map((item) => (
-                <div
-                  key={item.environment}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className={`w-3 h-3 rounded-full ${
-                        item.environment === "Production"
-                          ? "bg-tracer-danger"
-                          : item.environment === "Development"
-                            ? "bg-tracer-warning"
-                            : "bg-tracer-info"
-                      }`}
-                    ></div>
-                    <span className="text-sm font-medium text-tracer-text-secondary">
-                      {item.environment}
-                    </span>
-                  </div>
-                  <span className="text-sm font-semibold text-tracer-text-primary">
-                    {formatCurrency(item.cost)}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Cost Anomalies */}
-          <div className="bg-tracer-bg-tertiary rounded-lg border border-tracer-border p-4">
-            <h3 className="text-lg font-semibold text-tracer-text-primary mb-4">
-              Recent Anomalies
-            </h3>
+        {/* Cost Anomalies */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recent Anomalies</CardTitle>
+          </CardHeader>
+          <CardContent>
             {costData.anomalies.length > 0 ? (
               <div className="space-y-3">
                 {costData.anomalies.map((anomaly) => (
                   <div
                     key={anomaly.date}
-                    className="flex items-center justify-between p-3 bg-tracer-danger/10 rounded-lg border border-tracer-danger/20"
+                    className="flex items-center justify-between p-3 rounded-lg border border-destructive/20 bg-destructive/5"
                   >
                     <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-tracer-danger rounded-full"></div>
+                      <div className="w-2 h-2 bg-destructive rounded-full" />
                       <div>
-                        <p className="text-sm font-medium text-tracer-text-primary">
-                          Cost Spike Detected
-                        </p>
-                        <p className="text-xs text-tracer-text-muted">
+                        <p className="text-sm font-medium">Cost Spike Detected</p>
+                        <p className="text-xs text-muted-foreground">
                           {new Date(anomaly.date).toLocaleDateString()}
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-semibold text-tracer-danger">
-                        +
-                        {formatCurrency(
-                          anomaly.actualCost - anomaly.expectedCost,
-                        )}
+                      <p className="text-sm font-semibold text-destructive">
+                        +{formatCurrency(anomaly.actualCost - anomaly.expectedCost)}
                       </p>
-                      <p className="text-xs text-tracer-text-muted">
-                        vs expected
-                      </p>
+                      <p className="text-xs text-muted-foreground">vs expected</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="flex items-center justify-center h-20 text-tracer-text-muted">
+              <div className="flex items-center justify-center h-20 text-muted-foreground">
                 <p className="text-sm">No cost anomalies detected</p>
               </div>
             )}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
+
+        {/* Smart Suggestions */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2">
+              <Lightbulb className="h-4 w-4 text-warning" />
+              <span>Smart Suggestions</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="p-3 rounded-lg border border-warning/20 bg-warning/5">
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-warning rounded-full mt-2" />
+                <div>
+                  <p className="text-sm font-medium">Stop Underused Instances</p>
+                  <p className="text-xs text-muted-foreground">
+                    1 instance with &lt;5% CPU usage detected
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="p-3 rounded-lg border border-chart-1/20 bg-chart-1/5">
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-chart-1 rounded-full mt-2" />
+                <div>
+                  <p className="text-sm font-medium">Optimize Instance Sizing</p>
+                  <p className="text-xs text-muted-foreground">
+                    Potential $7.52/month savings available
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="p-3 rounded-lg border border-accent/20 bg-accent/5">
+              <div className="flex items-start space-x-3">
+                <div className="w-2 h-2 bg-accent rounded-full mt-2" />
+                <div>
+                  <p className="text-sm font-medium">Schedule Auto-Shutdown</p>
+                  <p className="text-xs text-muted-foreground">
+                    Configure non-prod environments
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

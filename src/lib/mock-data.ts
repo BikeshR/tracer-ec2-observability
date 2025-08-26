@@ -7,6 +7,8 @@ export interface EC2Instance {
   state: string;
   launchTime: string;
   region: string;
+  // Filter properties for the filter system
+  team?: string;
   // Metrics (will be real CloudWatch data later)
   cpuUtilization: number;
   memoryUtilization: number;
@@ -30,6 +32,7 @@ export const mockEC2Instances: EC2Instance[] = [
     state: "running",
     launchTime: "2024-01-15T10:00:00Z",
     region: "us-east-1",
+    team: "Chen Lab",
     // Very low utilization - classic "zombie" server
     cpuUtilization: 2.1,
     memoryUtilization: 15.3,
@@ -42,7 +45,7 @@ export const mockEC2Instances: EC2Instance[] = [
       Purpose: "Low-utilization-demo",
       Owner: "Assessment",
       Environment: "Test",
-      Team: "Research-A",
+      Team: "Chen Lab",
     },
     efficiencyScore: 15, // Very inefficient
     wasteLevel: "high",
@@ -54,6 +57,7 @@ export const mockEC2Instances: EC2Instance[] = [
     state: "running",
     launchTime: "2024-01-15T10:30:00Z",
     region: "us-east-1",
+    team: "Rodriguez Lab",
     // Good utilization - well-optimized
     cpuUtilization: 65.8,
     memoryUtilization: 72.4,
@@ -66,7 +70,7 @@ export const mockEC2Instances: EC2Instance[] = [
       Purpose: "Well-optimized-demo",
       Owner: "Assessment",
       Environment: "Production",
-      Team: "Research-B",
+      Team: "Rodriguez Lab",
     },
     efficiencyScore: 85, // Very efficient
     wasteLevel: "low",
@@ -77,7 +81,8 @@ export const mockEC2Instances: EC2Instance[] = [
     instanceType: "t2.micro",
     state: "running",
     launchTime: "2024-01-15T11:15:00Z",
-    region: "us-east-1",
+    region: "us-west-2",
+    team: "Watson Lab",
     // Moderate utilization but could be smaller instance
     cpuUtilization: 25.4,
     memoryUtilization: 30.1,
@@ -90,7 +95,7 @@ export const mockEC2Instances: EC2Instance[] = [
       Purpose: "Over-provisioned-demo",
       Owner: "Assessment",
       Environment: "Development",
-      Team: "Research-C",
+      Team: "Watson Lab",
     },
     efficiencyScore: 45, // Could be optimized
     wasteLevel: "medium",
@@ -102,6 +107,7 @@ export const mockEC2Instances: EC2Instance[] = [
     state: "stopped",
     launchTime: "2024-01-10T14:20:00Z",
     region: "us-east-1",
+    team: "Bioinformatics Core",
     // Stopped instance - no current utilization
     cpuUtilization: 0,
     memoryUtilization: 0,
@@ -114,7 +120,7 @@ export const mockEC2Instances: EC2Instance[] = [
       Purpose: "Stopped-demo",
       Owner: "Assessment",
       Environment: "Test",
-      Team: "Research-A",
+      Team: "Bioinformatics Core",
     },
     efficiencyScore: 0,
     wasteLevel: "low", // Not wasting if stopped
@@ -197,6 +203,32 @@ export interface AttributionBreakdown {
   instanceCount: number;
 }
 
+// Enhanced Attribution with Grant and PI Information
+export interface GrantBreakdown {
+  grantId: string;        // "NIH R01-2024-001"
+  grantName: string;      // "Genomics Research Initiative"
+  piName: string;         // "Dr. Sarah Chen"
+  allocatedCost: number;
+  percentage: number;
+}
+
+export interface TeamBreakdown {
+  teamName: string;       // "Chen Lab (Genomics)"
+  piName: string;
+  totalCost: number;
+  instanceCount: number;
+  efficiency: 'high' | 'medium' | 'low';
+}
+
+export interface ResearchAttribution {
+  totalCost: number;
+  attributedCost: number;
+  unaccountedCost: number;
+  attributionRate: number;
+  grantBreakdown: GrantBreakdown[];
+  teamBreakdown: TeamBreakdown[];
+}
+
 export interface AttributionData {
   totalCost: number;
   attributedCost: number;
@@ -216,6 +248,60 @@ export interface AttributionData {
   lastUpdated: string;
 }
 
+// Mock Enhanced Research Attribution Data
+export const mockResearchAttribution: ResearchAttribution = {
+  totalCost: 2847.23,
+  attributedCost: 2564.12,
+  unaccountedCost: 283.11,
+  attributionRate: 90.1,
+  grantBreakdown: [
+    {
+      grantId: "PROJ-001",
+      grantName: "Advanced Data Pipeline Development",
+      piName: "Sarah Chen",
+      allocatedCost: 1245.67,
+      percentage: 48.5,
+    },
+    {
+      grantId: "PROJ-002",
+      grantName: "Analytics Framework Project",
+      piName: "Maria Rodriguez",
+      allocatedCost: 892.34,
+      percentage: 34.8,
+    },
+    {
+      grantId: "PROJ-003",
+      grantName: "Computing Infrastructure Initiative",
+      piName: "David Watson",
+      allocatedCost: 426.11,
+      percentage: 16.6,
+    },
+  ],
+  teamBreakdown: [
+    {
+      teamName: "Chen Team",
+      piName: "Sarah Chen",
+      totalCost: 1245.67,
+      instanceCount: 12,
+      efficiency: 'high',
+    },
+    {
+      teamName: "Rodriguez Team",
+      piName: "Maria Rodriguez", 
+      totalCost: 892.34,
+      instanceCount: 8,
+      efficiency: 'medium',
+    },
+    {
+      teamName: "Watson Team",
+      piName: "David Watson",
+      totalCost: 426.11,
+      instanceCount: 6,
+      efficiency: 'high',
+    },
+  ],
+};
+
 // Mock Cost Attribution Data (Research Team Focused)
 export const mockAttributionData: AttributionData = {
   totalCost: 2847.23,
@@ -225,13 +311,13 @@ export const mockAttributionData: AttributionData = {
   breakdowns: {
     byTeam: [
       {
-        category: "Genomics Team",
+        category: "Chen Lab",
         cost: 1245.67,
         percentage: 48.5,
         instanceCount: 12,
       },
       {
-        category: "Proteomics Team",
+        category: "Rodriguez Lab", 
         cost: 892.34,
         percentage: 34.8,
         instanceCount: 8,
