@@ -1,6 +1,14 @@
 "use client";
 
 import { BarChart3, DollarSign, Info, Table } from "lucide-react";
+import {
+  Cell,
+  Legend,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -112,8 +120,34 @@ export default function CostAttributionPanel({
   // Get breakdown data based on selected type
   const getBreakdownData = () => {
     if (!data) return [];
-    return data.attribution.breakdowns[selectedBreakdown] || [];
+    const breakdownData = data.attribution.breakdowns[selectedBreakdown] || [];
+    
+    // Add unattributed cost as a separate entry
+    const unattributedEntry = {
+      category: "Unattributed",
+      cost: data.attribution.unaccountedCost,
+      percentage: (data.attribution.unaccountedCost / data.attribution.totalCost) * 100,
+      instanceCount: 0, // Unknown for unattributed
+    };
+
+    return [...breakdownData, unattributedEntry];
   };
+
+  // Generate consistent colors for pie chart
+  const generateColor = (category: string): string => {
+    if (category === "Unattributed") {
+      return "hsl(0, 0%, 60%)"; // Gray for unattributed
+    }
+    return `hsl(${(category.charCodeAt(0) * 137) % 360}, 70%, 50%)`;
+  };
+
+  // Prepare data for pie chart (all data, not sliced to show unattributed)
+  const pieChartData = getBreakdownData().map((item) => ({
+    ...item,
+    name: item.category,
+    value: item.cost,
+    color: generateColor(item.category),
+  }));
 
   // Loading state
   if (loading) {
@@ -307,14 +341,16 @@ export default function CostAttributionPanel({
                       <div
                         className="w-4 h-4 rounded-full"
                         style={{
-                          backgroundColor: `hsl(${(item.category.charCodeAt(0) * 137) % 360}, 70%, 50%)`,
+                          backgroundColor: generateColor(item.category),
                         }}
                       />
                       <div>
                         <p className="text-sm font-medium">{item.category}</p>
                         <p className="text-xs text-muted-foreground">
-                          {item.instanceCount} instance
-                          {item.instanceCount !== 1 ? "s" : ""}
+                          {item.category === "Unattributed" 
+                            ? "Unknown instances"
+                            : `${item.instanceCount} instance${item.instanceCount !== 1 ? "s" : ""}`
+                          }
                         </p>
                       </div>
                     </div>
@@ -338,49 +374,57 @@ export default function CostAttributionPanel({
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Progress Chart */}
-              <div className="space-y-4">
-                {breakdownData.slice(0, 6).map((item) => (
-                  <div key={item.category} className="space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <div className="flex items-center space-x-3">
-                        <div
-                          className="w-3 h-3 rounded-full"
-                          style={{
-                            backgroundColor: `hsl(${(item.category.charCodeAt(0) * 137) % 360}, 70%, 50%)`,
-                          }}
-                        />
-                        <span className="font-medium">{item.category}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 text-muted-foreground">
-                        <span>{formatCurrency(item.cost)}</span>
-                        <span className="text-xs">
-                          ({item.percentage.toFixed(1)}%)
-                        </span>
-                      </div>
-                    </div>
-                    <Progress value={item.percentage} className="h-3" />
-                  </div>
-                ))}
-              </div>
-
-              {/* Insight */}
-              <div className="bg-accent/10 border border-accent/20 rounded-lg p-4">
-                <div className="flex items-start space-x-3">
-                  <Info className="w-4 h-4 text-accent-foreground mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-accent-foreground">
-                      Attribution Insight
+              {/* Pie Chart */}
+              <div className="h-80">
+                {pieChartData.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={pieChartData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={60}
+                        outerRadius={120}
+                        paddingAngle={2}
+                        dataKey="value"
+                      >
+                        {pieChartData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        formatter={(value: number) => [
+                          formatCurrency(value),
+                          "Cost",
+                        ]}
+                        labelFormatter={(label) => label}
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--background))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "6px",
+                          fontSize: "14px",
+                        }}
+                      />
+                      <Legend
+                        formatter={(value, entry) => (
+                          <span className="text-sm text-foreground">
+                            {value} ({((entry.payload?.value || 0) / pieChartData.reduce((sum, item) => sum + item.value, 0) * 100).toFixed(1)}%)
+                          </span>
+                        )}
+                        wrapperStyle={{
+                          fontSize: "12px",
+                          paddingTop: "16px",
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-center text-muted-foreground">
+                    <p className="text-sm">
+                      No attribution data available for this breakdown
                     </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {attributionData.attributionRate > 85
-                        ? `Excellent coverage at ${attributionData.attributionRate.toFixed(1)}%`
-                        : attributionData.attributionRate > 60
-                          ? `Good coverage at ${attributionData.attributionRate.toFixed(1)}%`
-                          : `Low coverage at ${attributionData.attributionRate.toFixed(1)}%`}
-                    </p>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           )}
