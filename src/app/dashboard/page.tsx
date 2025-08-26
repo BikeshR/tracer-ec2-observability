@@ -94,14 +94,16 @@ export default function DashboardPage() {
 
         {/* Main Content */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* 🆕 COMPONENT 5: Persistent Filter System */}
-          <FilterSystem />
+          <div className="space-y-8">
+            {/* 🆕 COMPONENT 5: Persistent Filter System */}
+            <FilterSystem />
 
-          <CostOverview />
+            <CostOverview />
 
-          <CostAttributionPanel />
+            <CostAttributionPanel />
 
-          <EC2Table />
+            <EC2Table />
+          </div>
         </main>
 
         {/* Footer */}

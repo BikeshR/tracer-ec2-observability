@@ -1,6 +1,14 @@
 "use client";
 
-import { BarChart3, DollarSign, Table } from "lucide-react";
+import {
+  AlertTriangle,
+  BarChart3,
+  CheckCircle,
+  Table,
+  TrendingDown,
+  TrendingUp,
+  Zap,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 import {
   Cell,
@@ -10,7 +18,6 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -21,11 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  type AttributionData,
-  mockAttributionData,
-  mockResearchAttribution,
-} from "@/lib/mock-data";
+import { type AttributionData, mockAttributionData } from "@/lib/mock-data";
 
 interface ApiResponse {
   attribution: AttributionData;
@@ -138,7 +141,16 @@ export default function CostAttributionPanel({
     if (category === "Unattributed") {
       return "hsl(0, 0%, 60%)"; // Gray for unattributed
     }
-    return `hsl(${(category.charCodeAt(0) * 137) % 360}, 70%, 50%)`;
+
+    // Hash the entire string for better color distribution
+    let hash = 0;
+    for (let i = 0; i < category.length; i++) {
+      const char = category.charCodeAt(i);
+      hash = (hash << 5) - hash + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+
+    return `hsl(${Math.abs(hash) % 360}, 70%, 50%)`;
   };
 
   // Prepare data for pie chart (all data, not sliced to show unattributed)
@@ -214,78 +226,147 @@ export default function CostAttributionPanel({
   const breakdownData = getBreakdownData();
 
   return (
-    <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8 ${className}`}>
-      {/* Left: Team Funding Overview */}
+    <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 ${className}`}>
+      {/* Left: Attribution Health & Alerts */}
       <Card className="flex flex-col">
         <CardHeader>
           <CardTitle className="flex items-center space-x-2">
-            <DollarSign className="h-5 w-5 text-muted-foreground" />
-            <span>Team Funding Overview</span>
+            <Zap className="h-5 w-5 text-muted-foreground" />
+            <span>Attribution Health</span>
           </CardTitle>
         </CardHeader>
         <CardContent className="flex-1 space-y-4 pb-6">
-          {/* Attribution Summary */}
+          {/* Coverage Trend */}
           <div className="grid grid-cols-2 gap-4 text-center">
-            <div>
-              <div className="text-2xl font-bold text-success">
-                {formatCurrency(attributionData.attributedCost)}
-              </div>
-              <p className="text-xs text-muted-foreground">Attributed</p>
-            </div>
             <div>
               <div className="text-2xl font-bold">
                 {attributionData.attributionRate.toFixed(1)}%
               </div>
               <p className="text-xs text-muted-foreground">Coverage</p>
             </div>
+            <div>
+              <div className="flex items-center justify-center space-x-1">
+                {attributionData.attributionRate >
+                attributionData.attributionRatePreviousPeriod ? (
+                  <TrendingUp className="h-4 w-4 text-success" />
+                ) : (
+                  <TrendingDown className="h-4 w-4 text-destructive" />
+                )}
+                <span
+                  className={`text-2xl font-bold ${
+                    attributionData.attributionRate >
+                    attributionData.attributionRatePreviousPeriod
+                      ? "text-success"
+                      : "text-destructive"
+                  }`}
+                >
+                  {Math.abs(
+                    attributionData.attributionRate -
+                      attributionData.attributionRatePreviousPeriod,
+                  ).toFixed(1)}
+                  %
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">vs last month</p>
+            </div>
           </div>
 
-          {/* Grants Table */}
+          {/* Health Alerts */}
           <div className="space-y-3">
             <div className="text-sm font-medium text-muted-foreground">
-              Active Grants
+              Priority Alerts
             </div>
-            <div className="max-h-80 overflow-y-auto pr-2 space-y-3 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
-              {mockResearchAttribution.grantBreakdown.map((grant) => (
-                <div
-                  key={grant.grantId}
-                  className="flex items-center justify-between p-3 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="secondary" className="text-xs">
-                        {grant.grantId}
-                      </Badge>
-                      <span className="text-sm font-medium">
-                        {grant.grantName}
-                      </span>
+            <div className="max-h-80 overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
+              {attributionData.alerts.length > 0 ? (
+                attributionData.alerts.map((alert, index) => {
+                  const getAlertIcon = () => {
+                    switch (alert.type) {
+                      case "untagged":
+                        return AlertTriangle;
+                      case "budget_overrun":
+                        return AlertTriangle;
+                      case "coverage_drop":
+                        return TrendingDown;
+                      case "quick_win":
+                        return CheckCircle;
+                      default:
+                        return AlertTriangle;
+                    }
+                  };
+
+                  const getAlertColor = () => {
+                    switch (alert.severity) {
+                      case "high":
+                        return "text-destructive";
+                      case "medium":
+                        return "text-warning";
+                      case "low":
+                        return "text-success";
+                      default:
+                        return "text-muted-foreground";
+                    }
+                  };
+
+                  const getBorderColor = () => {
+                    switch (alert.severity) {
+                      case "high":
+                        return "border-destructive/20 bg-destructive/5";
+                      case "medium":
+                        return "border-warning/20 bg-warning/5";
+                      case "low":
+                        return "border-success/20 bg-success/5";
+                      default:
+                        return "border-border bg-secondary/20";
+                    }
+                  };
+
+                  const AlertIcon = getAlertIcon();
+
+                  return (
+                    <div
+                      key={`${alert.type}-${index}`}
+                      className={`flex items-start space-x-3 p-3 rounded-lg border ${getBorderColor()} hover:bg-accent/30 transition-colors`}
+                    >
+                      <AlertIcon
+                        className={`h-4 w-4 mt-0.5 ${getAlertColor()}`}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium">{alert.title}</p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {alert.description}
+                        </p>
+                        {alert.actionable && (
+                          <div className="text-xs text-primary mt-1 font-medium">
+                            Action required
+                          </div>
+                        )}
+                      </div>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      PI: {grant.piName}
+                  );
+                })
+              ) : (
+                <div className="flex items-center justify-center p-8 text-center">
+                  <div>
+                    <CheckCircle className="h-8 w-8 text-success mx-auto mb-2" />
+                    <p className="text-sm font-medium">All Good!</p>
+                    <p className="text-xs text-muted-foreground">
+                      No attribution issues detected
                     </p>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm font-semibold">
-                      {formatCurrency(grant.allocatedCost)}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {grant.percentage.toFixed(1)}%
-                    </div>
-                  </div>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Right: Cost Analysis Dashboard */}
+      {/* Right: Cost Breakdown */}
       <Card className="flex flex-col">
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center space-x-2">
               <BarChart3 className="h-5 w-5 text-muted-foreground" />
-              <span>Cost Analysis Dashboard</span>
+              <span>Cost Breakdown</span>
             </CardTitle>
             <ToggleGroup
               type="single"
@@ -330,9 +411,9 @@ export default function CostAttributionPanel({
           </div>
         </CardHeader>
 
-        <CardContent className="flex-1 pb-6">
+        <CardContent className="flex-1">
           {viewMode === "table" ? (
-            <div className="max-h-80 overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
+            <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
               {breakdownData.length > 0 ? (
                 breakdownData.map((item) => (
                   <div
@@ -394,16 +475,19 @@ export default function CostAttributionPanel({
                         ))}
                       </Pie>
                       <Tooltip
-                        formatter={(value: number) => [
-                          formatCurrency(value),
-                          "Cost",
-                        ]}
-                        labelFormatter={(label) => label}
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--background))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "6px",
-                          fontSize: "14px",
+                        animationDuration={0}
+                        content={({ active, payload, label }) => {
+                          if (active && payload && payload.length) {
+                            return (
+                              <div className="bg-popover text-popover-foreground border border-border rounded-md px-3 py-2 shadow-md animate-in fade-in-0 duration-150">
+                                <p className="font-medium">{label}</p>
+                                <p className="text-sm">
+                                  {formatCurrency(payload[0].value as number)}
+                                </p>
+                              </div>
+                            );
+                          }
+                          return null;
                         }}
                       />
                       <Legend

@@ -496,11 +496,25 @@ export interface ResearchAttribution {
   teamBreakdown: TeamBreakdown[];
 }
 
+// Attribution Health Alert Types
+export interface AttributionAlert {
+  type: "untagged" | "budget_overrun" | "coverage_drop" | "quick_win";
+  severity: "high" | "medium" | "low";
+  title: string;
+  description: string;
+  count?: number;
+  amount?: number;
+  actionable: boolean;
+}
+
 export interface AttributionData {
   totalCost: number;
   attributedCost: number;
   unaccountedCost: number;
   attributionRate: number; // Percentage of costs that are attributed
+  attributionRatePreviousPeriod: number; // Previous period for comparison
+  untaggedInstanceCount: number; // Instances without proper team/project tags
+  alerts: AttributionAlert[]; // Health alerts and quick wins
   breakdowns: {
     byTeam: AttributionBreakdown[];
     byProject: AttributionBreakdown[];
@@ -577,149 +591,158 @@ const generateAttributionData = () => {
 export const mockResearchAttribution: ResearchAttribution =
   generateAttributionData();
 
-// Generate comprehensive attribution breakdowns
+// Generate simplified attribution breakdowns
 const generateAttributionBreakdowns = () => {
-  const instances = generateLargeDataset();
-  const runningInstances = instances.filter((i) => i.state === "running");
-  const totalCost = runningInstances.reduce(
-    (sum, instance) => sum + instance.monthlyCost,
-    0,
-  );
+  // Use base total cost for simplicity
+  const totalCost = 3847.21;
 
-  // Generate team breakdown
-  const teamCosts = new Map<string, { cost: number; instanceCount: number }>();
-  runningInstances.forEach((instance) => {
-    const team = instance.team || "Unknown";
-    const current = teamCosts.get(team) || { cost: 0, instanceCount: 0 };
-    teamCosts.set(team, {
-      cost: current.cost + instance.monthlyCost,
-      instanceCount: current.instanceCount + 1,
-    });
-  });
-
-  // Other breakdowns follow similar patterns
-  const environmentCosts = new Map<
-    string,
-    { cost: number; instanceCount: number }
-  >();
-  const instanceTypeCosts = new Map<
-    string,
-    { cost: number; instanceCount: number }
-  >();
-  const regionCosts = new Map<
-    string,
-    { cost: number; instanceCount: number }
-  >();
-
-  runningInstances.forEach((instance) => {
-    // Environment breakdown
-    const env = instance.tags.Environment || "Unknown";
-    const envCurrent = environmentCosts.get(env) || {
-      cost: 0,
-      instanceCount: 0,
-    };
-    environmentCosts.set(env, {
-      cost: envCurrent.cost + instance.monthlyCost,
-      instanceCount: envCurrent.instanceCount + 1,
-    });
-
-    // Instance type breakdown
-    const typeCurrent = instanceTypeCosts.get(instance.instanceType) || {
-      cost: 0,
-      instanceCount: 0,
-    };
-    instanceTypeCosts.set(instance.instanceType, {
-      cost: typeCurrent.cost + instance.monthlyCost,
-      instanceCount: typeCurrent.instanceCount + 1,
-    });
-
-    // Region breakdown
-    const regionCurrent = regionCosts.get(instance.region) || {
-      cost: 0,
-      instanceCount: 0,
-    };
-    regionCosts.set(instance.region, {
-      cost: regionCurrent.cost + instance.monthlyCost,
-      instanceCount: regionCurrent.instanceCount + 1,
-    });
-  });
-
-  // Convert to breakdown arrays
-  const byTeam = Array.from(teamCosts.entries())
-    .map(([category, data]) => ({
-      category,
-      cost: Math.round(data.cost * 100) / 100,
-      percentage: Number(((data.cost / totalCost) * 100).toFixed(1)),
-      instanceCount: data.instanceCount,
-    }))
-    .sort((a, b) => b.cost - a.cost);
-
-  const byEnvironment = Array.from(environmentCosts.entries())
-    .map(([category, data]) => ({
-      category,
-      cost: Math.round(data.cost * 100) / 100,
-      percentage: Number(((data.cost / totalCost) * 100).toFixed(1)),
-      instanceCount: data.instanceCount,
-    }))
-    .sort((a, b) => b.cost - a.cost);
-
-  const byInstanceType = Array.from(instanceTypeCosts.entries())
-    .map(([category, data]) => ({
-      category,
-      cost: Math.round(data.cost * 100) / 100,
-      percentage: Number(((data.cost / totalCost) * 100).toFixed(1)),
-      instanceCount: data.instanceCount,
-    }))
-    .sort((a, b) => b.cost - a.cost);
-
-  const byRegion = Array.from(regionCosts.entries())
-    .map(([category, data]) => ({
-      category,
-      cost: Math.round(data.cost * 100) / 100,
-      percentage: Number(((data.cost / totalCost) * 100).toFixed(1)),
-      instanceCount: data.instanceCount,
-    }))
-    .sort((a, b) => b.cost - a.cost);
-
-  // Generate project breakdown (synthetic)
-  const projects = [
-    "High-Throughput Genomic Sequencing",
-    "AI-Driven Drug Discovery Platform",
-    "Protein Structure Prediction",
-    "Cancer Immunotherapy Research",
-    "Metabolic Pathway Analysis",
-    "Single-Cell RNA Sequencing",
-    "Biomarker Discovery Pipeline",
-    "Pharmacogenomics Study",
-    "Synthetic Biology Platform",
-    "Microbiome Analysis Framework",
-    "Structural Biology Computation",
-    "Epidemiological Modeling",
+  // Simple static breakdowns for clean, predictable data
+  const byTeam = [
+    { category: "Chen Lab", cost: 1234.56, percentage: 32.1, instanceCount: 8 },
+    {
+      category: "Rodriguez Research",
+      cost: 987.43,
+      percentage: 25.7,
+      instanceCount: 6,
+    },
+    {
+      category: "Johnson Group",
+      cost: 765.89,
+      percentage: 19.9,
+      instanceCount: 5,
+    },
+    { category: "Smith Lab", cost: 543.21, percentage: 14.1, instanceCount: 4 },
+    {
+      category: "Wilson Team",
+      cost: 316.12,
+      percentage: 8.2,
+      instanceCount: 2,
+    },
   ];
 
-  const byProject = projects
-    .map((project) => {
-      const cost =
-        (totalCost / projects.length) * (1 + (Math.random() - 0.5) * 0.8);
-      return {
-        category: project,
-        cost: Math.round(cost * 100) / 100,
-        percentage: Number(((cost / totalCost) * 100).toFixed(1)),
-        instanceCount:
-          Math.floor(runningInstances.length / projects.length) +
-          Math.floor(Math.random() * 5),
-      };
-    })
-    .sort((a, b) => b.cost - a.cost);
+  const byProject = [
+    {
+      category: "Genomic Sequencing",
+      cost: 1456.78,
+      percentage: 37.9,
+      instanceCount: 12,
+    },
+    {
+      category: "Drug Discovery",
+      cost: 1123.45,
+      percentage: 29.2,
+      instanceCount: 8,
+    },
+    {
+      category: "Protein Analysis",
+      cost: 789.32,
+      percentage: 20.5,
+      instanceCount: 6,
+    },
+    {
+      category: "Cancer Research",
+      cost: 477.66,
+      percentage: 12.4,
+      instanceCount: 4,
+    },
+  ];
 
-  const attributedCost = Math.round(totalCost * 0.88 * 100) / 100;
-  const unaccountedCost = Math.round((totalCost - attributedCost) * 100) / 100;
+  const byEnvironment = [
+    {
+      category: "Production",
+      cost: 2308.33,
+      percentage: 60.0,
+      instanceCount: 18,
+    },
+    {
+      category: "Development",
+      cost: 1154.16,
+      percentage: 30.0,
+      instanceCount: 9,
+    },
+    { category: "Testing", cost: 384.72, percentage: 10.0, instanceCount: 3 },
+  ];
+
+  const byInstanceType = [
+    {
+      category: "c5.2xlarge",
+      cost: 1538.88,
+      percentage: 40.0,
+      instanceCount: 12,
+    },
+    {
+      category: "m5.xlarge",
+      cost: 1154.16,
+      percentage: 30.0,
+      instanceCount: 15,
+    },
+    { category: "r5.large", cost: 769.44, percentage: 20.0, instanceCount: 8 },
+    {
+      category: "t3.medium",
+      cost: 384.73,
+      percentage: 10.0,
+      instanceCount: 10,
+    },
+  ];
+
+  const byRegion = [
+    {
+      category: "us-east-1",
+      cost: 2308.33,
+      percentage: 60.0,
+      instanceCount: 20,
+    },
+    {
+      category: "us-west-2",
+      cost: 1154.16,
+      percentage: 30.0,
+      instanceCount: 8,
+    },
+    { category: "eu-west-1", cost: 384.72, percentage: 10.0, instanceCount: 2 },
+  ];
+
+  // Simplified attribution metrics
+  const attributedCost = 3385.08; // 88% of total
+  const unaccountedCost = 462.13; // 12% unaccounted
+  const attributionRate = 88.0;
+  const attributionRatePreviousPeriod = 83.2; // Shows improvement
+  const untaggedInstanceCount = 7;
+
+  // Simple, focused alerts
+  const alerts: AttributionAlert[] = [
+    {
+      type: "untagged",
+      severity: "medium",
+      title: "7 instances need team tags",
+      description: "Improve attribution coverage by adding team/project tags",
+      count: 7,
+      actionable: true,
+    },
+    {
+      type: "budget_overrun",
+      severity: "medium",
+      title: "Chen Lab: 115% of grant allocation used",
+      description: "Team spending exceeds planned budget allocation",
+      actionable: true,
+    },
+    {
+      type: "quick_win",
+      severity: "low",
+      title: "Tag 3 largest instances to reach 92% coverage",
+      description: "Focus on c5.2xlarge instances first for maximum impact",
+      count: 3,
+      actionable: true,
+    },
+  ];
 
   return {
-    totalCost: Math.round(totalCost * 100) / 100,
+    totalCost,
     attributedCost,
     unaccountedCost,
-    attributionRate: Number(((attributedCost / totalCost) * 100).toFixed(1)),
+    attributionRate,
+    attributionRatePreviousPeriod,
+    untaggedInstanceCount,
+    alerts,
     breakdowns: {
       byTeam,
       byProject,
