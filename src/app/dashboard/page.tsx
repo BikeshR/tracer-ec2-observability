@@ -2,7 +2,7 @@
 
 import { Database, RefreshCw } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CostAttributionPanel from "@/components/CostAttributionPanel";
 import CostOverview from "@/components/CostOverview";
 import EC2Table from "@/components/EC2Table";
@@ -12,8 +12,13 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 export default function DashboardPage() {
-  const [lastRefresh, setLastRefresh] = useState(new Date());
+  const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Initialize lastRefresh only on client to avoid hydration mismatch
+  useEffect(() => {
+    setLastRefresh(new Date());
+  }, []);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -68,7 +73,7 @@ export default function DashboardPage() {
                       Mock Data
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {lastRefresh.toLocaleTimeString()}
+                      {lastRefresh?.toLocaleTimeString() || "--:--:--"}
                     </span>
                   </div>
                 </div>

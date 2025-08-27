@@ -192,8 +192,14 @@ async function transformAWSInstance(
     region: process.env.AWS_REGION || "us-east-1",
     cpuUtilization: metrics.cpuUtilization,
     memoryUtilization: metrics.memoryUtilization,
+    gpuUtilization: 0, // Would require GPU-enabled CloudWatch metrics
     networkIn: metrics.networkIn,
     networkOut: metrics.networkOut,
+    uptimeHours: instance.LaunchTime
+      ? Math.floor(
+          (Date.now() - instance.LaunchTime.getTime()) / (1000 * 60 * 60),
+        )
+      : 0,
     costPerHour: 0.0116, // t2.micro pricing - will be dynamic later
     monthlyCost: 0.0116 * 24 * 30,
     tags,

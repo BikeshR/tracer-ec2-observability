@@ -4,7 +4,11 @@ import {
   GetDimensionValuesCommand,
 } from "@aws-sdk/client-cost-explorer";
 import { NextResponse } from "next/server";
-import { type CostData, type CostTrendPoint, mockCostData } from "@/lib/mock-data";
+import {
+  type CostData,
+  type CostTrendPoint,
+  mockCostData,
+} from "@/lib/mock-data";
 
 // Environment-aware data source switching
 const useMockData =
@@ -87,8 +91,11 @@ async function fetchAWSCostData(): Promise<CostData> {
         if (result.TimePeriod?.Start) {
           // Convert AWS data to CostTrendPoint format
           const baselineCost = dailyCost * 0.8; // Assume baseline is 80% of actual
-          const efficiencyScore = Math.min(100, (baselineCost / dailyCost) * 100);
-          
+          const efficiencyScore = Math.min(
+            100,
+            (baselineCost / dailyCost) * 100,
+          );
+
           let pattern: "efficient" | "research_activity" | "wasteful" | "idle";
           if (efficiencyScore >= 80) pattern = "efficient";
           else if (efficiencyScore >= 60) pattern = "research_activity";

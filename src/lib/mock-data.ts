@@ -12,8 +12,10 @@ export interface EC2Instance {
   // Metrics (will be real CloudWatch data later)
   cpuUtilization: number;
   memoryUtilization: number;
+  gpuUtilization: number; // GPU usage percentage (0 if no GPU)
   networkIn: number;
   networkOut: number;
+  uptimeHours: number; // Hours since launch
   // Cost data
   costPerHour: number;
   monthlyCost: number;
@@ -24,45 +26,22 @@ export interface EC2Instance {
   wasteLevel: "low" | "medium" | "high";
 }
 
-// Generate large-scale mock data for stress testing
+// Generate simplified mock data for clean testing
 const generateLargeDataset = () => {
   const instanceTypes = [
     { type: "t2.micro", cost: 0.0116 },
     { type: "t3.small", cost: 0.0208 },
     { type: "t3.medium", cost: 0.0416 },
-    { type: "t3.large", cost: 0.0832 },
-    { type: "t3.xlarge", cost: 0.1664 },
     { type: "m5.large", cost: 0.096 },
     { type: "m5.xlarge", cost: 0.192 },
-    { type: "m5.2xlarge", cost: 0.384 },
-    { type: "m5.4xlarge", cost: 0.768 },
     { type: "c5.large", cost: 0.085 },
     { type: "c5.xlarge", cost: 0.17 },
-    { type: "c5.2xlarge", cost: 0.34 },
-    { type: "c5.4xlarge", cost: 0.68 },
     { type: "r5.large", cost: 0.126 },
-    { type: "r5.xlarge", cost: 0.252 },
-    { type: "r5.2xlarge", cost: 0.504 },
-    { type: "r5.4xlarge", cost: 1.008 },
     { type: "g4dn.xlarge", cost: 0.526 },
-    { type: "g4dn.2xlarge", cost: 0.752 },
     { type: "p3.2xlarge", cost: 3.06 },
   ];
 
-  const regions = [
-    "us-east-1",
-    "us-east-2",
-    "us-west-1",
-    "us-west-2",
-    "eu-west-1",
-    "eu-west-2",
-    "eu-west-3",
-    "eu-central-1",
-    "ap-southeast-1",
-    "ap-southeast-2",
-    "ap-northeast-1",
-    "ap-south-1",
-  ];
+  const regions = ["us-east-1", "us-west-2", "eu-west-1"];
 
   const teams = [
     "Chen Genomics Laboratory",
@@ -73,71 +52,52 @@ const generateLargeDataset = () => {
     "Williams Data Science Institute",
     "Brown Systems Biology Laboratory",
     "Davis Structural Biology Unit",
-    "Miller Evolutionary Biology Lab",
-    "Wilson Cancer Research Institute",
-    "Moore Neuroscience Computing Center",
-    "Taylor Drug Discovery Platform",
-    "Jackson High Performance Computing Lab",
-    "White Machine Learning Research Group",
-    "Harris Biostatistics Department",
-    "Martin Synthetic Biology Laboratory",
-    "Thompson Precision Medicine Unit",
-    "Garcia Population Genetics Lab",
-    "Martinez Comparative Genomics Center",
-    "Robinson Immunology Informatics Lab",
-    "Clark Metabolomics Research Unit",
-    "Lewis Epigenetics Laboratory",
-    "Lee Systems Pharmacology Center",
-    "Walker Microbiome Analysis Lab",
-    "Hall Cryo-EM Computing Facility",
-    "Allen Single Cell Analysis Lab",
-    "Young Proteome Informatics Unit",
-    "King Structural Genomics Laboratory",
-    "Wright Computational Neuroscience Lab",
-    "Lopez Network Biology Center",
   ];
 
-  const states = ["running", "stopped", "stopping", "pending", "terminated"];
-  const environments = ["Production", "Development", "Test", "Staging"];
+  const environments = ["Production", "Development", "Test"];
   const serverPurposes = [
     "GPU Cluster Node",
-    "High Memory Database Server",
-    "Compute Intensive Analysis",
-    "Data Processing Pipeline",
-    "Machine Learning Training",
-    "Sequence Alignment Server",
-    "Protein Structure Modeling",
-    "Statistical Analysis Workstation",
-    "Web Application Server",
-    "File Storage Server",
-    "Backup and Archive System",
-    "Development Environment",
-    "Testing Framework Server",
-    "CI/CD Pipeline Runner",
-    "Container Orchestration Node",
-    "Load Balancer",
-    "Monitoring and Logging Server",
-    "Security Scanning System",
-    "Data Warehouse Server",
-    "Real-time Analytics Engine",
+    "Database Server",
+    "Compute Analysis",
+    "Data Pipeline",
+    "ML Training",
+    "Sequence Alignment",
+    "Statistical Analysis",
+    "Web Server",
+    "File Storage",
+    "Development Env",
   ];
 
   const instances: EC2Instance[] = [];
 
-  // Generate 150 instances for comprehensive stress testing
-  for (let i = 1; i <= 150; i++) {
+  // Generate 50 instances for clean testing with guaranteed variations
+  for (let i = 1; i <= 50; i++) {
     const instanceType =
       instanceTypes[Math.floor(Math.random() * instanceTypes.length)];
     const region = regions[Math.floor(Math.random() * regions.length)];
     const team = teams[Math.floor(Math.random() * teams.length)];
-    const state = states[Math.floor(Math.random() * states.length)];
     const environment =
       environments[Math.floor(Math.random() * environments.length)];
     const purpose =
       serverPurposes[Math.floor(Math.random() * serverPurposes.length)];
 
+    // Ensure we have all status variations by distributing them across instances
+    let state: string;
+    if (i <= 35) {
+      state = "running"; // Most instances running
+    } else if (i <= 40) {
+      state = "stopped";
+    } else if (i <= 45) {
+      state = "pending";
+    } else if (i <= 48) {
+      state = "stopping";
+    } else {
+      state = "terminated";
+    }
+
     let cpuUtil = 0,
       memUtil = 0,
+      gpuUtil = 0,
       networkIn = 0,
       networkOut = 0;
     let efficiencyScore = 0;
@@ -145,61 +105,92 @@ const generateLargeDataset = () => {
     let costPerHour = 0,
       monthlyCost = 0;
 
+    // Calculate uptime from launch time
+    const launchDate = new Date(
+      2024,
+      0,
+      Math.floor(Math.random() * 25) + 1,
+      Math.floor(Math.random() * 24),
+    );
+    const uptimeHours = Math.floor(
+      (Date.now() - launchDate.getTime()) / (1000 * 60 * 60),
+    );
+
     if (state === "running") {
-      const utilizationPattern = Math.random();
-      if (utilizationPattern < 0.2) {
-        cpuUtil = Math.random() * 10;
-        memUtil = Math.random() * 20;
+      // Ensure we have all waste level variations by distributing them
+      let utilizationPattern: number;
+      if (i <= 12) {
+        utilizationPattern = Math.random() * 0.3; // Force high waste for first 12 instances
+      } else if (i <= 24) {
+        utilizationPattern = 0.3 + Math.random() * 0.3; // Force medium waste for next 12
+      } else {
+        utilizationPattern = 0.6 + Math.random() * 0.4; // Force efficient for rest
+      }
+
+      if (utilizationPattern < 0.3) {
+        // High waste scenario
+        cpuUtil = Math.random() * 15;
+        memUtil = Math.random() * 25;
         efficiencyScore = Math.floor(Math.random() * 30);
         wasteLevel = "high";
-      } else if (utilizationPattern < 0.5) {
-        cpuUtil = 20 + Math.random() * 40;
-        memUtil = 25 + Math.random() * 45;
-        efficiencyScore = 30 + Math.floor(Math.random() * 40);
+      } else if (utilizationPattern < 0.6) {
+        // Medium efficiency
+        cpuUtil = 25 + Math.random() * 35;
+        memUtil = 30 + Math.random() * 40;
+        efficiencyScore = 35 + Math.floor(Math.random() * 35);
         wasteLevel = "medium";
       } else {
-        cpuUtil = 50 + Math.random() * 40;
-        memUtil = 55 + Math.random() * 35;
-        efficiencyScore = 60 + Math.floor(Math.random() * 40);
+        // Efficient usage
+        cpuUtil = 60 + Math.random() * 30;
+        memUtil = 65 + Math.random() * 25;
+        efficiencyScore = 70 + Math.floor(Math.random() * 30);
         wasteLevel = "low";
       }
 
-      networkIn = Math.random() * 10;
-      networkOut = Math.random() * 8;
+      networkIn = Math.random() * 8;
+      networkOut = Math.random() * 6;
+
+      // GPU utilization for GPU instance types only
+      if (
+        instanceType.type.includes("p3") ||
+        instanceType.type.includes("g4") ||
+        purpose.includes("GPU") ||
+        purpose.includes("ML")
+      ) {
+        gpuUtil =
+          utilizationPattern < 0.3
+            ? Math.random() * 20
+            : utilizationPattern < 0.6
+              ? 35 + Math.random() * 40
+              : 70 + Math.random() * 25;
+      }
+
       costPerHour = instanceType.cost;
       monthlyCost = costPerHour * 24 * 30;
     }
 
-    let serverName: string;
-    if (i % 15 === 0) {
-      serverName = `Tracer-VeryLongServerNameForTextOverflowTesting-${purpose.replace(/\s+/g, "")}-${i}`;
-    } else {
-      serverName = `Tracer-${purpose.replace(/\s+/g, "").substring(0, 15)}-${String(i).padStart(3, "0")}`;
-    }
+    const serverName = `Tracer-${purpose.replace(/\s+/g, "").substring(0, 12)}-${String(i).padStart(2, "0")}`;
 
     instances.push({
       instanceId: `i-${Math.random().toString(36).substring(2, 15)}`,
       name: serverName,
       instanceType: instanceType.type,
       state,
-      launchTime: new Date(
-        2024,
-        0,
-        Math.floor(Math.random() * 25) + 1,
-        Math.floor(Math.random() * 24),
-      ).toISOString(),
+      launchTime: launchDate.toISOString(),
       region,
       team,
       cpuUtilization: Number(cpuUtil.toFixed(1)),
       memoryUtilization: Number(memUtil.toFixed(1)),
+      gpuUtilization: Number(gpuUtil.toFixed(1)),
       networkIn: Number(networkIn.toFixed(2)),
       networkOut: Number(networkOut.toFixed(2)),
+      uptimeHours: Math.max(0, uptimeHours),
       costPerHour: Number(costPerHour.toFixed(4)),
       monthlyCost: Number(monthlyCost.toFixed(2)),
       tags: {
         Name: serverName,
         Purpose: purpose,
-        Owner: "Stress-Test",
+        Owner: "Research",
         Environment: environment,
         Team: team,
       },
@@ -326,7 +317,7 @@ const generateResearchWorkflowPattern = (
   return trendData;
 };
 
-// Generate cost data based on the large dataset
+// Generate cost data based on the simplified dataset
 const generateCostData = (): CostData => {
   const instances = generateLargeDataset();
   const runningInstances = instances.filter((i) => i.state === "running");
@@ -529,7 +520,7 @@ export interface AttributionData {
   lastUpdated: string;
 }
 
-// Generate large-scale attribution data
+// Generate simplified attribution data
 const generateAttributionData = () => {
   const instances = generateLargeDataset();
   const runningInstances = instances.filter((i) => i.state === "running");

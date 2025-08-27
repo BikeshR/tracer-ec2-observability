@@ -41,6 +41,8 @@ type SortField =
   | "instanceType"
   | "cpuUtilization"
   | "memoryUtilization"
+  | "gpuUtilization"
+  | "uptime"
   | "costPerHour"
   | "state"
   | "efficiencyScore"
@@ -51,8 +53,8 @@ export default function EC2Table() {
   const [data, setData] = useState<ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [sortField, setSortField] = useState<SortField>("efficiencyScore");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [sortField, setSortField] = useState<SortField>("wasteLevel");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(() => {
     // Load from localStorage or default to 25
@@ -107,14 +109,56 @@ export default function EC2Table() {
   const sortedInstances =
     filteredInstances.length > 0
       ? [...filteredInstances].sort((a, b) => {
-          let aValue: string | number = a[sortField];
-          let bValue: string | number = b[sortField];
+          let aValue: string | number;
+          let bValue: string | number;
 
-          // Handle waste level sorting
+          // Handle special sorting cases
           if (sortField === "wasteLevel") {
             const wasteOrder = { high: 3, medium: 2, low: 1 };
             aValue = wasteOrder[a.wasteLevel];
             bValue = wasteOrder[b.wasteLevel];
+          } else if (sortField === "uptime") {
+            aValue = a.uptimeHours;
+            bValue = b.uptimeHours;
+          } else {
+            // Safe property access for sortable fields
+            switch (sortField) {
+              case "name":
+                aValue = a.name;
+                bValue = b.name;
+                break;
+              case "instanceType":
+                aValue = a.instanceType;
+                bValue = b.instanceType;
+                break;
+              case "cpuUtilization":
+                aValue = a.cpuUtilization;
+                bValue = b.cpuUtilization;
+                break;
+              case "memoryUtilization":
+                aValue = a.memoryUtilization;
+                bValue = b.memoryUtilization;
+                break;
+              case "gpuUtilization":
+                aValue = a.gpuUtilization;
+                bValue = b.gpuUtilization;
+                break;
+              case "costPerHour":
+                aValue = a.costPerHour;
+                bValue = b.costPerHour;
+                break;
+              case "state":
+                aValue = a.state;
+                bValue = b.state;
+                break;
+              case "efficiencyScore":
+                aValue = a.efficiencyScore;
+                bValue = b.efficiencyScore;
+                break;
+              default:
+                aValue = 0;
+                bValue = 0;
+            }
           }
 
           // Handle string vs number comparison
@@ -185,10 +229,9 @@ export default function EC2Table() {
         };
       case "low":
         return {
-          bgClass: "bg-emerald-500/10",
-          textClass: "text-emerald-500",
-          badgeClass:
-            "bg-emerald-500/10 text-emerald-500 border border-success/20",
+          bgClass: "bg-success/10",
+          textClass: "text-success",
+          badgeClass: "bg-success/10 text-success border border-success/20",
           icon: "🟢",
           label: "Efficient",
         };
@@ -199,7 +242,45 @@ export default function EC2Table() {
   const getUtilizationStyling = (utilization: number) => {
     if (utilization < 20) return "text-destructive font-semibold";
     if (utilization < 60) return "text-warning font-medium";
-    return "text-emerald-500 font-semibold";
+    return "text-success font-semibold";
+  };
+
+  // Get utilization bar component
+  const UtilizationBar = ({
+    utilization,
+    type,
+  }: {
+    utilization: number;
+    type: string;
+  }) => (
+    <div className="flex items-center space-x-2">
+      <div className="w-16 h-2 bg-secondary rounded-full overflow-hidden">
+        <div
+          className={`h-full transition-all duration-300 ${
+            utilization < 20
+              ? "bg-destructive"
+              : utilization < 60
+                ? "bg-warning"
+                : "bg-success"
+          }`}
+          style={{ width: `${Math.min(100, utilization)}%` }}
+        />
+      </div>
+      <div
+        className={`text-sm font-medium ${getUtilizationStyling(utilization)} min-w-[3rem]`}
+      >
+        {type === "gpu" && utilization === 0
+          ? "—"
+          : `${utilization.toFixed(1)}%`}
+      </div>
+    </div>
+  );
+
+  // Format uptime helper
+  const formatUptime = (hours: number) => {
+    if (hours < 24) return `${hours}h`;
+    if (hours < 168) return `${Math.floor(hours / 24)}d`;
+    return `${Math.floor(hours / 168)}w`;
   };
 
   // Legacy state styling function - kept for potential custom styling needs
@@ -230,6 +311,10 @@ export default function EC2Table() {
         return "default";
       case "stopped":
         return "secondary";
+      case "pending":
+        return "outline"; // Neutral for transitional state
+      case "stopping":
+        return "outline"; // Neutral for transitional state
       case "terminated":
         return "destructive";
       default:
@@ -245,7 +330,7 @@ export default function EC2Table() {
       case "high":
         return "destructive";
       case "medium":
-        return "outline";
+        return "secondary"; // Better visual styling than outline
       case "low":
         return "default";
       default:
@@ -343,7 +428,7 @@ export default function EC2Table() {
                     onClick={() => handleSort("cpuUtilization")}
                     className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
                   >
-                    CPU Usage
+                    CPU
                     {sortField === "cpuUtilization" &&
                       (sortDirection === "asc" ? (
                         <ChevronUp className="ml-1 h-4 w-4" />
@@ -358,8 +443,38 @@ export default function EC2Table() {
                     onClick={() => handleSort("memoryUtilization")}
                     className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
                   >
-                    Memory %
+                    Memory
                     {sortField === "memoryUtilization" &&
+                      (sortDirection === "asc" ? (
+                        <ChevronUp className="ml-1 h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="ml-1 h-4 w-4" />
+                      ))}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort("gpuUtilization")}
+                    className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
+                  >
+                    GPU
+                    {sortField === "gpuUtilization" &&
+                      (sortDirection === "asc" ? (
+                        <ChevronUp className="ml-1 h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="ml-1 h-4 w-4" />
+                      ))}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort("uptime")}
+                    className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
+                  >
+                    Uptime
+                    {sortField === "uptime" &&
                       (sortDirection === "asc" ? (
                         <ChevronUp className="ml-1 h-4 w-4" />
                       ) : (
@@ -373,7 +488,7 @@ export default function EC2Table() {
                     onClick={() => handleSort("costPerHour")}
                     className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
                   >
-                    Cost/Hour
+                    Hourly Cost
                     {sortField === "costPerHour" &&
                       (sortDirection === "asc" ? (
                         <ChevronUp className="ml-1 h-4 w-4" />
@@ -388,7 +503,7 @@ export default function EC2Table() {
                     onClick={() => handleSort("state")}
                     className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
                   >
-                    State
+                    Status
                     {sortField === "state" &&
                       (sortDirection === "asc" ? (
                         <ChevronUp className="ml-1 h-4 w-4" />
@@ -403,7 +518,7 @@ export default function EC2Table() {
                     onClick={() => handleSort("efficiencyScore")}
                     className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
                   >
-                    Efficiency
+                    Score
                     {sortField === "efficiencyScore" &&
                       (sortDirection === "asc" ? (
                         <ChevronUp className="ml-1 h-4 w-4" />
@@ -418,7 +533,7 @@ export default function EC2Table() {
                     onClick={() => handleSort("wasteLevel")}
                     className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
                   >
-                    Waste Alert
+                    Resource Health
                     {sortField === "wasteLevel" &&
                       (sortDirection === "asc" ? (
                         <ChevronUp className="ml-1 h-4 w-4" />
@@ -438,13 +553,13 @@ export default function EC2Table() {
                     {/* Instance Info */}
                     <TableCell>
                       <div className="flex flex-col">
-                        <div className="font-medium text-tracer-text-primary">
+                        <div className="font-medium text-foreground">
                           {instance.name}
                         </div>
-                        <div className="text-sm text-tracer-text-secondary">
+                        <div className="text-sm text-muted-foreground">
                           {instance.instanceType} • {instance.instanceId}
                         </div>
-                        <div className="text-xs text-tracer-text-muted">
+                        <div className="text-xs text-muted-foreground">
                           {instance.region}
                         </div>
                       </div>
@@ -452,35 +567,62 @@ export default function EC2Table() {
 
                     {/* CPU Utilization */}
                     <TableCell>
-                      <div
-                        className={`text-sm font-medium ${getUtilizationStyling(instance.cpuUtilization)}`}
-                      >
-                        {instance.cpuUtilization.toFixed(1)}%
-                      </div>
+                      <UtilizationBar
+                        utilization={instance.cpuUtilization}
+                        type="cpu"
+                      />
                     </TableCell>
 
                     {/* Memory Utilization */}
                     <TableCell>
-                      <div
-                        className={`text-sm font-medium ${getUtilizationStyling(instance.memoryUtilization)}`}
-                      >
-                        {instance.memoryUtilization.toFixed(1)}%
+                      <UtilizationBar
+                        utilization={instance.memoryUtilization}
+                        type="memory"
+                      />
+                    </TableCell>
+
+                    {/* GPU Utilization */}
+                    <TableCell>
+                      <UtilizationBar
+                        utilization={instance.gpuUtilization}
+                        type="gpu"
+                      />
+                    </TableCell>
+
+                    {/* Uptime */}
+                    <TableCell>
+                      <div className="text-sm font-medium text-foreground">
+                        {formatUptime(instance.uptimeHours)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {instance.uptimeHours}h total
                       </div>
                     </TableCell>
 
                     {/* Cost */}
                     <TableCell>
-                      <div className="text-sm text-tracer-text-primary font-medium">
+                      <div className="text-sm text-foreground font-medium">
                         ${instance.costPerHour.toFixed(4)}
                       </div>
-                      <div className="text-xs text-tracer-text-secondary">
+                      <div className="text-xs text-muted-foreground">
                         ${instance.monthlyCost.toFixed(2)}/month
                       </div>
                     </TableCell>
 
-                    {/* State */}
+                    {/* Status */}
                     <TableCell>
-                      <Badge variant={getStateVariant(instance.state)}>
+                      <Badge
+                        variant={getStateVariant(instance.state)}
+                        className={
+                          instance.state.toLowerCase() === "pending"
+                            ? "bg-blue-500/10 text-blue-500 border-blue-500/20"
+                            : instance.state.toLowerCase() === "stopping"
+                              ? "bg-orange-500/10 text-orange-500 border-orange-500/20"
+                              : instance.state.toLowerCase() === "running"
+                                ? "bg-success/10 text-success border-success/20"
+                                : ""
+                        }
+                      >
                         {instance.state}
                       </Badge>
                     </TableCell>
@@ -496,21 +638,20 @@ export default function EC2Table() {
                       </div>
                     </TableCell>
 
-                    {/* Waste Alert */}
+                    {/* Resource Health */}
                     <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-lg">{wasteStyling.icon}</span>
-                        <div>
-                          <Badge variant={getWasteVariant(instance.wasteLevel)}>
-                            {wasteStyling.label}
-                          </Badge>
-                          {instance.wasteLevel === "high" && (
-                            <div className="text-xs text-destructive mt-1">
-                              💰 Potential savings available
-                            </div>
-                          )}
-                        </div>
-                      </div>
+                      <Badge
+                        variant={getWasteVariant(instance.wasteLevel)}
+                        className={
+                          instance.wasteLevel === "medium"
+                            ? "bg-warning/10 text-warning border-warning/20"
+                            : instance.wasteLevel === "low"
+                              ? "bg-success/10 text-success border-success/20"
+                              : ""
+                        }
+                      >
+                        {wasteStyling.label}
+                      </Badge>
                     </TableCell>
                   </TableRow>
                 );
