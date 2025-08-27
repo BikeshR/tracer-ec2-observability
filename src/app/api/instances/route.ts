@@ -208,21 +208,41 @@ async function transformAWSInstance(
   };
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // Use mock data in development or when AWS credentials are not available
+    // Get data source from query parameter
+    const { searchParams } = new URL(request.url);
+    const dataSource = searchParams.get("dataSource");
+
+    // Use mock data if explicitly requested or if no AWS credentials available
     const useMockData =
-      process.env.NODE_ENV === "development" ||
+      dataSource === "mock" ||
       !process.env.AWS_ACCESS_KEY_ID ||
       !process.env.AWS_SECRET_ACCESS_KEY;
 
     if (useMockData) {
-      console.log("🔧 Using mock EC2 data for development");
+      console.log("🔧 Using mock EC2 data");
       return NextResponse.json({
         instances: mockEC2Instances,
         source: "mock",
         timestamp: new Date().toISOString(),
       });
+    }
+
+    // Validate that real data is requested and credentials are available
+    if (
+      dataSource === "real" &&
+      (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY)
+    ) {
+      return NextResponse.json(
+        {
+          instances: [],
+          source: "error",
+          timestamp: new Date().toISOString(),
+          error: "AWS credentials not configured. Cannot fetch real data.",
+        },
+        { status: 400 },
+      );
     }
 
     // Real AWS integration
@@ -251,7 +271,24 @@ export async function GET() {
   } catch (error) {
     console.error("❌ EC2 API Error:", error);
 
-    // Graceful fallback to mock data
+    // Get data source from query parameter to determine error behavior
+    const { searchParams } = new URL(request.url);
+    const dataSource = searchParams.get("dataSource");
+
+    // If real data was explicitly requested, return error instead of fallback
+    if (dataSource === "real") {
+      return NextResponse.json(
+        {
+          instances: [],
+          source: "error",
+          timestamp: new Date().toISOString(),
+          error: error instanceof Error ? error.message : "Unknown AWS error",
+        },
+        { status: 500 },
+      );
+    }
+
+    // For other cases or no explicit data source, fallback to mock data
     console.log("🔄 Falling back to mock data due to AWS error");
     return NextResponse.json({
       instances: mockEC2Instances,

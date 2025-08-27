@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { DataSourceProvider } from "@/contexts/DataSourceContext";
 
 export const metadata: Metadata = {
   title: "EC2 Observability Dashboard | Tracer",
@@ -44,7 +45,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans antialiased">
+        <DataSourceProvider>{children}</DataSourceProvider>
+      </body>
     </html>
   );
 }

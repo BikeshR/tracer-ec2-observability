@@ -1,13 +1,13 @@
 "use client";
 
-import { Database, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import CostAttributionPanel from "@/components/CostAttributionPanel";
 import CostOverview from "@/components/CostOverview";
+import DataSourceToggle from "@/components/DataSourceToggle";
 import EC2Table from "@/components/EC2Table";
 import { FilterProvider, FilterSystem } from "@/components/filters";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
@@ -62,20 +62,12 @@ export default function DashboardPage() {
 
               {/* Right Section: Status, Data & Actions */}
               <div className="flex items-center space-x-4">
-                {/* Enhanced Data Source Status */}
+                {/* Data Source Toggle */}
                 <div className="hidden lg:flex items-center space-x-3">
-                  <div className="flex items-center space-x-2 text-sm">
-                    <Badge
-                      variant="secondary"
-                      className="flex items-center gap-1.5 px-2.5"
-                    >
-                      <Database className="h-3 w-3" />
-                      Mock Data
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">
-                      {lastRefresh?.toLocaleTimeString() || "--:--:--"}
-                    </span>
-                  </div>
+                  <DataSourceToggle />
+                  <span className="text-xs text-muted-foreground">
+                    {lastRefresh?.toLocaleTimeString() || "--:--:--"}
+                  </span>
                 </div>
 
                 {/* Refresh Button */}

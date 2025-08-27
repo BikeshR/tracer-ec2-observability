@@ -10,31 +10,21 @@ import {
   mockCostData,
 } from "@/lib/mock-data";
 
-// Environment-aware data source switching
-const useMockData =
-  process.env.NODE_ENV === "development" ||
-  !process.env.AWS_ACCESS_KEY_ID ||
-  !process.env.AWS_SECRET_ACCESS_KEY;
-
 // AWS Cost Explorer Client (only if credentials available)
 let costExplorerClient: CostExplorerClient | null = null;
 
-if (!useMockData) {
-  const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
-  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
-
-  if (accessKeyId && secretAccessKey) {
-    try {
-      costExplorerClient = new CostExplorerClient({
-        region: process.env.AWS_REGION || "us-east-1",
-        credentials: {
-          accessKeyId,
-          secretAccessKey,
-        },
-      });
-    } catch (error) {
-      console.warn("Failed to initialize Cost Explorer client:", error);
-    }
+// Initialize AWS client if credentials are available
+if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+  try {
+    costExplorerClient = new CostExplorerClient({
+      region: process.env.AWS_REGION || "us-east-1",
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+    });
+  } catch (error) {
+    console.warn("Failed to initialize Cost Explorer client:", error);
   }
 }
 
@@ -150,33 +140,60 @@ async function fetchAWSCostData(): Promise<CostData> {
 }
 
 // GET endpoint - returns cost data
-export async function GET() {
+export async function GET(request: Request) {
   try {
+    // Get data source from query parameter
+    const { searchParams } = new URL(request.url);
+    const dataSource = searchParams.get("dataSource");
+
+    // Use mock data if explicitly requested or if no AWS credentials available
+    const useMockData = dataSource === "mock" || !costExplorerClient;
+
     let costData: CostData;
-    let source: "mock" | "aws" | "mock-fallback";
+    let source: "mock" | "aws" | "error";
 
     if (useMockData) {
-      // Development mode or no AWS credentials
+      // Mock data requested or no AWS credentials
       costData = mockCostData;
       source = "mock";
-      console.log(
-        "[Cost API] Using mock data (development mode or no AWS credentials)",
-      );
-    } else {
-      // Production mode with AWS credentials
+      console.log("[Cost API] Using mock data");
+    } else if (dataSource === "real") {
+      // Real data explicitly requested
+      if (!costExplorerClient) {
+        return NextResponse.json(
+          {
+            costs: null,
+            source: "error",
+            timestamp: new Date().toISOString(),
+            error:
+              "AWS credentials not configured. Cannot fetch real cost data.",
+          },
+          { status: 400 },
+        );
+      }
+
       try {
         console.log("[Cost API] Attempting to fetch real AWS cost data...");
         costData = await fetchAWSCostData();
         source = "aws";
         console.log("[Cost API] Successfully fetched AWS cost data");
       } catch (error) {
-        console.warn(
-          "[Cost API] AWS fetch failed, falling back to mock data:",
-          error,
+        console.error("[Cost API] AWS fetch failed:", error);
+        return NextResponse.json(
+          {
+            costs: null,
+            source: "error",
+            timestamp: new Date().toISOString(),
+            error: error instanceof Error ? error.message : "Unknown AWS error",
+          },
+          { status: 500 },
         );
-        costData = mockCostData;
-        source = "mock-fallback";
       }
+    } else {
+      // Default to mock data
+      costData = mockCostData;
+      source = "mock";
+      console.log("[Cost API] Using mock data (default)");
     }
 
     return NextResponse.json({
@@ -187,11 +204,10 @@ export async function GET() {
   } catch (error) {
     console.error("[Cost API] Unexpected error:", error);
 
-    // Final fallback to mock data
     return NextResponse.json(
       {
-        costs: mockCostData,
-        source: "mock-fallback",
+        costs: null,
+        source: "error",
         timestamp: new Date().toISOString(),
         error: error instanceof Error ? error.message : "Unknown error",
       },
@@ -207,7 +223,6 @@ export async function POST() {
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV,
       costExplorerAvailable: !!costExplorerClient,
-      dataSource: useMockData ? "mock" : "aws",
       awsRegion: process.env.AWS_REGION || "us-east-1",
       credentialsConfigured: !!(
         process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
@@ -215,7 +230,7 @@ export async function POST() {
     };
 
     // Test AWS connection if available
-    if (!useMockData && costExplorerClient) {
+    if (costExplorerClient) {
       try {
         const dateRange = getDateRange();
         console.log(
@@ -254,9 +269,7 @@ export async function POST() {
     return NextResponse.json({
       status: "mock-mode",
       source: "mock",
-      message: useMockData
-        ? "Running in development mode with mock data"
-        : "No AWS credentials configured",
+      message: "No AWS credentials configured or client initialization failed",
       ...healthCheck,
     });
   } catch (error) {

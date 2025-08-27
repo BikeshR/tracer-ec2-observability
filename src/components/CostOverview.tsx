@@ -11,6 +11,7 @@ import {
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDataSource } from "@/contexts/DataSourceContext";
 import { useFilteredData } from "@/hooks/useFilteredData";
 import type { CostTrendPoint, EC2Instance } from "@/lib/mock-data";
 import RecentAnomalies from "./RecentAnomalies";
@@ -18,7 +19,7 @@ import ResearchCostTrend from "./ResearchCostTrend";
 
 interface EC2ApiResponse {
   instances: EC2Instance[];
-  source: "mock" | "aws" | "mock-fallback";
+  source: "mock" | "aws" | "mock-fallback" | "error";
   timestamp: string;
   error?: string;
 }
@@ -31,7 +32,7 @@ interface CostApiResponse {
   costTrend: CostTrendPoint[];
   anomalies: { date: string; expectedCost: number; actualCost: number }[];
   weeklyEfficiencyScore: number;
-  source: "mock" | "aws" | "mock-fallback";
+  source: "mock" | "aws" | "mock-fallback" | "error";
   timestamp: string;
 }
 
@@ -45,6 +46,8 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
   const [loading, setLoading] = useState(true);
   const [_error, setError] = useState<string | null>(null);
 
+  const { dataSource } = useDataSource();
+
   // Fetch EC2 instances and cost data
   useEffect(() => {
     const loadData = async () => {
@@ -52,18 +55,31 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
         setLoading(true);
         setError(null);
 
+        // Create URLs with dataSource parameter
+        const instancesUrl = new URL("/api/instances", window.location.origin);
+        const costsUrl = new URL("/api/costs", window.location.origin);
+        instancesUrl.searchParams.set("dataSource", dataSource);
+        costsUrl.searchParams.set("dataSource", dataSource);
+
         // Fetch both instances and cost data in parallel
         const [instancesResponse, costResponse] = await Promise.all([
-          fetch("/api/instances"),
-          fetch("/api/costs"),
+          fetch(instancesUrl),
+          fetch(costsUrl),
         ]);
 
         if (!instancesResponse.ok) {
-          throw new Error(`Instances API Error: ${instancesResponse.status}`);
+          const errorData = await instancesResponse.json().catch(() => ({}));
+          throw new Error(
+            errorData.error ||
+              `Instances API Error: ${instancesResponse.status}`,
+          );
         }
 
         if (!costResponse.ok) {
-          throw new Error(`Cost API Error: ${costResponse.status}`);
+          const errorData = await costResponse.json().catch(() => ({}));
+          throw new Error(
+            errorData.error || `Cost API Error: ${costResponse.status}`,
+          );
         }
 
         const [instancesData, costData]: [EC2ApiResponse, CostApiResponse] =
@@ -88,7 +104,7 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
     };
 
     loadData();
-  }, []);
+  }, [dataSource]);
 
   // Transform instances for filtering (map tags.Team to team field)
   const instancesForFiltering = useMemo(

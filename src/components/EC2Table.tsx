@@ -26,12 +26,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useDataSource } from "@/contexts/DataSourceContext";
 import { useFilteredData } from "@/hooks/useFilteredData";
 import type { EC2Instance } from "@/lib/mock-data";
 
 interface ApiResponse {
   instances: EC2Instance[];
-  source: "mock" | "aws" | "mock-fallback";
+  source: "mock" | "aws" | "mock-fallback" | "error";
   timestamp: string;
   error?: string;
 }
@@ -66,15 +67,21 @@ export default function EC2Table() {
     return 25;
   });
 
+  const { dataSource } = useDataSource();
+
   // Fetch EC2 data
   useEffect(() => {
     const fetchInstances = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/instances");
+        const url = new URL("/api/instances", window.location.origin);
+        url.searchParams.set("dataSource", dataSource);
+
+        const response = await fetch(url);
 
         if (!response.ok) {
-          throw new Error(`API Error: ${response.status}`);
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `API Error: ${response.status}`);
         }
 
         const apiData: ApiResponse = await response.json();
@@ -91,7 +98,7 @@ export default function EC2Table() {
     };
 
     fetchInstances();
-  }, []);
+  }, [dataSource]);
 
   // Transform instances for filtering (map tags.Team to team field)
   const instancesForFiltering =
