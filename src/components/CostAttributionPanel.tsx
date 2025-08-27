@@ -9,7 +9,7 @@ import {
   TrendingUp,
   Zap,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Cell,
   Legend,
@@ -28,10 +28,11 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { type AttributionData, mockAttributionData } from "@/lib/mock-data";
+import { useFilteredData } from "@/hooks/useFilteredData";
+import type { EC2Instance } from "@/lib/mock-data";
 
-interface ApiResponse {
-  attribution: AttributionData;
+interface EC2ApiResponse {
+  instances: EC2Instance[];
   source: "mock" | "aws" | "mock-fallback";
   timestamp: string;
   error?: string;
@@ -62,54 +63,60 @@ const BREAKDOWN_LABELS = {
 export default function CostAttributionPanel({
   className = "",
 }: CostAttributionPanelProps) {
-  const [data, setData] = useState<ApiResponse | null>(null);
+  const [data, setData] = useState<EC2ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [_error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>("table");
   const [selectedBreakdown, setSelectedBreakdown] =
     useState<BreakdownType>("byTeam");
 
-  // Fetch real attribution data from API
+  // Fetch EC2 instances data
   useEffect(() => {
-    const loadAttributionData = async () => {
+    const loadInstanceData = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const response = await fetch("/api/attribution");
+        const response = await fetch("/api/instances");
 
         if (!response.ok) {
           throw new Error(`API Error: ${response.status}`);
         }
 
-        const apiData: ApiResponse = await response.json();
+        const apiData: EC2ApiResponse = await response.json();
         setData(apiData);
         console.log(
-          "[CostAttributionPanel] Attribution data loaded:",
+          "[CostAttributionPanel] Instance data loaded:",
           apiData.source,
         );
       } catch (err) {
         const errorMessage =
-          err instanceof Error
-            ? err.message
-            : "Failed to fetch attribution data";
+          err instanceof Error ? err.message : "Failed to fetch instance data";
         setError(errorMessage);
         console.error("CostAttributionPanel fetch error:", err);
-
-        // Fallback to mock data on error
-        setData({
-          attribution: mockAttributionData,
-          source: "mock-fallback",
-          timestamp: new Date().toISOString(),
-          error: errorMessage,
-        });
       } finally {
         setLoading(false);
       }
     };
 
-    loadAttributionData();
+    loadInstanceData();
   }, []);
+
+  // Transform instances for filtering (map tags.Team to team field)
+  const instancesForFiltering = useMemo(
+    () =>
+      data?.instances?.map((instance) => ({
+        ...instance,
+        team: instance.tags?.Team,
+        region: instance.region,
+      })) || [],
+    [data?.instances],
+  );
+
+  // Apply filters using the same logic as EC2Table
+  const { filteredData: filteredInstances } = useFilteredData(
+    instancesForFiltering,
+  );
 
   // Format currency
   const formatCurrency = (amount: number): string => {
@@ -121,22 +128,140 @@ export default function CostAttributionPanel({
     }).format(amount);
   };
 
-  // Get breakdown data based on selected type
-  const getBreakdownData = () => {
-    if (!data) return [];
-    const breakdownData = data.attribution.breakdowns[selectedBreakdown] || [];
+  // Dynamically calculate breakdown data from filtered instances
+  const getBreakdownData = useMemo(() => {
+    if (!filteredInstances.length) return [];
 
-    // Add unattributed cost as a separate entry
-    const unattributedEntry = {
-      category: "Unattributed",
-      cost: data.attribution.unaccountedCost,
-      percentage:
-        (data.attribution.unaccountedCost / data.attribution.totalCost) * 100,
-      instanceCount: 0, // Unknown for unattributed
+    const runningInstances = filteredInstances.filter(
+      (i) => i.state === "running",
+    );
+    if (!runningInstances.length) return [];
+
+    const totalCost = runningInstances.reduce(
+      (sum, instance) => sum + instance.monthlyCost,
+      0,
+    );
+
+    // Group instances by the selected breakdown type
+    const groups = new Map<
+      string,
+      { instances: typeof runningInstances; cost: number }
+    >();
+
+    runningInstances.forEach((instance) => {
+      let category = "";
+
+      switch (selectedBreakdown) {
+        case "byTeam":
+          category = instance.team || "Unattributed";
+          break;
+        case "byProject": {
+          // Map teams to projects for demo purposes
+          const projectMap: Record<string, string> = {
+            "Chen Genomics Laboratory": "Genomic Sequencing",
+            "Rodriguez Bioinformatics Core": "Drug Discovery",
+            "Watson Computational Biology Unit": "Protein Analysis",
+            "Anderson Proteomics Research Center": "Cancer Research",
+            "Johnson Molecular Dynamics Lab": "Genomic Sequencing",
+            "Williams Data Science Institute": "Drug Discovery",
+            "Brown Systems Biology Laboratory": "Protein Analysis",
+            "Davis Structural Biology Unit": "Cancer Research",
+          };
+          category = projectMap[instance.team || ""] || "Other Projects";
+          break;
+        }
+        case "byEnvironment":
+          category = instance.tags?.Environment || "Production";
+          break;
+        case "byInstanceType":
+          category = instance.instanceType;
+          break;
+        case "byRegion":
+          category = instance.region;
+          break;
+        case "byJob":
+          category = instance.jobId || "No Job Assigned";
+          break;
+        default:
+          category = "Other";
+      }
+
+      const existing = groups.get(category) || { instances: [], cost: 0 };
+      groups.set(category, {
+        instances: [...existing.instances, instance],
+        cost: existing.cost + instance.monthlyCost,
+      });
+    });
+
+    // Convert to breakdown format and sort by cost descending
+    return Array.from(groups.entries())
+      .map(([category, { instances, cost }]) => ({
+        category,
+        cost,
+        percentage:
+          totalCost > 0 ? Number(((cost / totalCost) * 100).toFixed(1)) : 0,
+        instanceCount: instances.length,
+      }))
+      .sort((a, b) => b.cost - a.cost);
+  }, [filteredInstances, selectedBreakdown]);
+
+  // Calculate attribution metrics from filtered data
+  const attributionMetrics = useMemo(() => {
+    const runningInstances = filteredInstances.filter(
+      (i) => i.state === "running",
+    );
+    const totalCost = runningInstances.reduce(
+      (sum, instance) => sum + instance.monthlyCost,
+      0,
+    );
+
+    const attributedInstances = runningInstances.filter((i) => i.team);
+    const attributedCost = attributedInstances.reduce(
+      (sum, instance) => sum + instance.monthlyCost,
+      0,
+    );
+
+    const unaccountedCost = totalCost - attributedCost;
+    const attributionRate =
+      totalCost > 0
+        ? Number(((attributedCost / totalCost) * 100).toFixed(1))
+        : 0;
+    const untaggedInstanceCount =
+      runningInstances.length - attributedInstances.length;
+
+    // Generate simple alerts based on metrics
+    const alerts = [];
+
+    if (untaggedInstanceCount > 0) {
+      alerts.push({
+        type: "untagged",
+        severity: untaggedInstanceCount > 5 ? "high" : "medium",
+        title: `${untaggedInstanceCount} instances need team tags`,
+        description: "Improve attribution coverage by adding team/project tags",
+        actionable: true,
+      });
+    }
+
+    if (attributionRate < 50) {
+      alerts.push({
+        type: "coverage_drop",
+        severity: "high",
+        title: "Low attribution coverage",
+        description: "Less than 50% of costs are properly attributed",
+        actionable: true,
+      });
+    }
+
+    return {
+      totalCost,
+      attributedCost,
+      unaccountedCost,
+      attributionRate,
+      attributionRatePreviousPeriod: 83.2, // Static for demo
+      untaggedInstanceCount,
+      alerts,
     };
-
-    return [...breakdownData, unattributedEntry];
-  };
+  }, [filteredInstances]);
 
   // Generate consistent colors for pie chart
   const generateColor = (category: string): string => {
@@ -156,7 +281,7 @@ export default function CostAttributionPanel({
   };
 
   // Prepare data for pie chart (all data, not sliced to show unattributed)
-  const pieChartData = getBreakdownData().map((item) => ({
+  const pieChartData = getBreakdownData.map((item) => ({
     ...item,
     name: item.category,
     value: item.cost,
@@ -224,8 +349,7 @@ export default function CostAttributionPanel({
     );
   }
 
-  const attributionData = data.attribution;
-  const breakdownData = getBreakdownData();
+  const breakdownData = getBreakdownData;
 
   return (
     <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 ${className}`}>
@@ -242,30 +366,32 @@ export default function CostAttributionPanel({
           <div className="grid grid-cols-2 gap-4 text-center">
             <div>
               <div className="text-2xl font-bold">
-                {attributionData.attributionRate.toFixed(1)}%
+                {attributionMetrics.attributionRate}%
               </div>
               <p className="text-xs text-muted-foreground">Coverage</p>
             </div>
             <div>
               <div className="flex items-center justify-center space-x-1">
-                {attributionData.attributionRate >
-                attributionData.attributionRatePreviousPeriod ? (
+                {attributionMetrics.attributionRate >
+                attributionMetrics.attributionRatePreviousPeriod ? (
                   <TrendingUp className="h-4 w-4 text-success" />
                 ) : (
                   <TrendingDown className="h-4 w-4 text-destructive" />
                 )}
                 <span
                   className={`text-2xl font-bold ${
-                    attributionData.attributionRate >
-                    attributionData.attributionRatePreviousPeriod
+                    attributionMetrics.attributionRate >
+                    attributionMetrics.attributionRatePreviousPeriod
                       ? "text-success"
                       : "text-destructive"
                   }`}
                 >
-                  {Math.abs(
-                    attributionData.attributionRate -
-                      attributionData.attributionRatePreviousPeriod,
-                  ).toFixed(1)}
+                  {Number(
+                    Math.abs(
+                      attributionMetrics.attributionRate -
+                        attributionMetrics.attributionRatePreviousPeriod,
+                    ).toFixed(1),
+                  )}
                   %
                 </span>
               </div>
@@ -279,8 +405,8 @@ export default function CostAttributionPanel({
               Priority Alerts
             </div>
             <div className="max-h-80 overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
-              {attributionData.alerts.length > 0 ? (
-                attributionData.alerts.map((alert, index) => {
+              {attributionMetrics.alerts.length > 0 ? (
+                attributionMetrics.alerts.map((alert, index) => {
                   const getAlertIcon = () => {
                     switch (alert.type) {
                       case "untagged":
@@ -443,7 +569,7 @@ export default function CostAttributionPanel({
                         {formatCurrency(item.cost)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        {item.percentage.toFixed(1)}%
+                        {item.percentage}%
                       </p>
                     </div>
                   </div>
@@ -496,14 +622,16 @@ export default function CostAttributionPanel({
                         formatter={(value, entry) => (
                           <span className="text-sm text-foreground">
                             {value} (
-                            {(
-                              ((entry.payload?.value || 0) /
-                                pieChartData.reduce(
-                                  (sum, item) => sum + item.value,
-                                  0,
-                                )) *
-                              100
-                            ).toFixed(1)}
+                            {Number(
+                              (
+                                ((entry.payload?.value || 0) /
+                                  pieChartData.reduce(
+                                    (sum, item) => sum + item.value,
+                                    0,
+                                  )) *
+                                100
+                              ).toFixed(1),
+                            )}
                             %)
                           </span>
                         )}

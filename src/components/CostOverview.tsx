@@ -8,17 +8,31 @@ import {
   TrendingUp,
   Zap,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { type CostData, mockCostData } from "@/lib/mock-data";
+import { useFilteredData } from "@/hooks/useFilteredData";
+import type { CostTrendPoint, EC2Instance } from "@/lib/mock-data";
+import RecentAnomalies from "./RecentAnomalies";
 import ResearchCostTrend from "./ResearchCostTrend";
 
-interface ApiResponse {
-  costs: CostData;
+interface EC2ApiResponse {
+  instances: EC2Instance[];
   source: "mock" | "aws" | "mock-fallback";
   timestamp: string;
   error?: string;
+}
+
+interface CostApiResponse {
+  totalMonthlyCost: number;
+  dailyBurnRate: number;
+  attributedCost: number;
+  unattributedCost: number;
+  costTrend: CostTrendPoint[];
+  anomalies: { date: string; expectedCost: number; actualCost: number }[];
+  weeklyEfficiencyScore: number;
+  source: "mock" | "aws" | "mock-fallback";
+  timestamp: string;
 }
 
 interface CostOverviewProps {
@@ -26,46 +40,191 @@ interface CostOverviewProps {
 }
 
 export default function CostOverview({ className = "" }: CostOverviewProps) {
-  const [data, setData] = useState<ApiResponse | null>(null);
+  const [data, setData] = useState<EC2ApiResponse | null>(null);
+  const [costData, setCostData] = useState<CostApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [_error, setError] = useState<string | null>(null);
 
-  // Fetch real cost data from API
+  // Fetch EC2 instances and cost data
   useEffect(() => {
-    const loadCostData = async () => {
+    const loadData = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        const response = await fetch("/api/costs");
+        // Fetch both instances and cost data in parallel
+        const [instancesResponse, costResponse] = await Promise.all([
+          fetch("/api/instances"),
+          fetch("/api/costs"),
+        ]);
 
-        if (!response.ok) {
-          throw new Error(`API Error: ${response.status}`);
+        if (!instancesResponse.ok) {
+          throw new Error(`Instances API Error: ${instancesResponse.status}`);
         }
 
-        const apiData: ApiResponse = await response.json();
-        setData(apiData);
-        console.log("[CostOverview] Cost data loaded:", apiData.source);
+        if (!costResponse.ok) {
+          throw new Error(`Cost API Error: ${costResponse.status}`);
+        }
+
+        const [instancesData, costData]: [EC2ApiResponse, CostApiResponse] =
+          await Promise.all([instancesResponse.json(), costResponse.json()]);
+
+        setData(instancesData);
+        setCostData(costData);
+        console.log(
+          "[CostOverview] Data loaded - Instances:",
+          instancesData.source,
+          "| Costs:",
+          costData.source,
+        );
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : "Failed to fetch cost data";
+          err instanceof Error ? err.message : "Failed to fetch data";
         setError(errorMessage);
         console.error("CostOverview fetch error:", err);
-
-        // Fallback to mock data on error
-        setData({
-          costs: mockCostData,
-          source: "mock-fallback",
-          timestamp: new Date().toISOString(),
-          error: errorMessage,
-        });
       } finally {
         setLoading(false);
       }
     };
 
-    loadCostData();
+    loadData();
   }, []);
+
+  // Transform instances for filtering (map tags.Team to team field)
+  const instancesForFiltering = useMemo(
+    () =>
+      data?.instances?.map((instance) => ({
+        ...instance,
+        team: instance.tags?.Team,
+        region: instance.region,
+      })) || [],
+    [data?.instances],
+  );
+
+  // Apply filters using the same logic as other components
+  const { filteredData: filteredInstances } = useFilteredData(
+    instancesForFiltering,
+  );
+
+  // Calculate cost metrics dynamically from filtered instances
+  const costMetrics = useMemo(() => {
+    const runningInstances = filteredInstances.filter(
+      (i) => i.state === "running",
+    );
+
+    if (runningInstances.length === 0) {
+      return {
+        totalMonthlyCost: 0,
+        projectedMonthlyCost: 0,
+        dailyBurnRate: 0,
+        wasteScore: 0,
+        wasteAmount: 0,
+        totalMonthlyCostPreviousPeriod: 0,
+        dailyBurnRatePreviousPeriod: 0,
+        wasteScorePreviousPeriod: 0,
+      };
+    }
+
+    const totalMonthlyCost = runningInstances.reduce(
+      (sum, instance) => sum + instance.monthlyCost,
+      0,
+    );
+    const dailyBurnRate = totalMonthlyCost / 30;
+
+    // Calculate waste score based on efficiency scores
+    const avgEfficiencyScore =
+      runningInstances.reduce(
+        (sum, instance) => sum + instance.efficiencyScore,
+        0,
+      ) / runningInstances.length;
+    const wasteScore = Number((100 - avgEfficiencyScore).toFixed(1));
+
+    // Calculate waste amount (instances with high waste levels)
+    const wasteAmount = runningInstances
+      .filter((i) => i.wasteLevel === "high" || i.wasteLevel === "medium")
+      .reduce((sum, instance) => sum + instance.monthlyCost * 0.3, 0); // Assume 30% of cost is wasted
+
+    // Mock previous period data for trend calculations (in real app, this would come from historical data)
+    const totalMonthlyCostPreviousPeriod = totalMonthlyCost * 0.95; // 5% growth
+    const dailyBurnRatePreviousPeriod = totalMonthlyCostPreviousPeriod / 30;
+    const wasteScorePreviousPeriod = wasteScore * 1.1; // Efficiency improved
+
+    // Projected cost based on current trends
+    const projectedMonthlyCost = totalMonthlyCost * 1.05; // 5% projected growth
+
+    return {
+      totalMonthlyCost,
+      projectedMonthlyCost,
+      dailyBurnRate,
+      wasteScore,
+      wasteAmount,
+      totalMonthlyCostPreviousPeriod,
+      dailyBurnRatePreviousPeriod,
+      wasteScorePreviousPeriod,
+    };
+  }, [filteredInstances]);
+
+  // Generate mock cost trend data from filtered instances
+  const { costTrend, weeklyEfficiencyScore } = useMemo(() => {
+    const runningInstances = filteredInstances.filter(
+      (i) => i.state === "running",
+    );
+    const avgDailyCost =
+      runningInstances.reduce(
+        (sum, instance) => sum + instance.monthlyCost,
+        0,
+      ) / 30;
+
+    // Generate 7 days of trend data
+    const today = new Date();
+    const trendData: CostTrendPoint[] = [];
+
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+
+      // Generate realistic daily variations
+      const baseMultiplier = 0.8 + Math.random() * 0.4; // 0.8 to 1.2
+      const baselineCost = avgDailyCost * baseMultiplier;
+      const actualCost = baselineCost * (0.9 + Math.random() * 0.2); // ±10% variation
+
+      const efficiency = Math.min(100, (baselineCost / actualCost) * 100);
+      let pattern: CostTrendPoint["pattern"];
+      let annotation: string;
+
+      if (efficiency > 85) {
+        pattern = "efficient";
+        annotation = "Optimal resource utilization";
+      } else if (efficiency > 70) {
+        pattern = "research_activity";
+        annotation = "Normal research workload";
+      } else if (efficiency > 50) {
+        pattern = "wasteful";
+        annotation = "Some resource waste detected";
+      } else {
+        pattern = "idle";
+        annotation = "High idle resource usage";
+      }
+
+      trendData.push({
+        date: date.toISOString(),
+        actualCost: Number(actualCost.toFixed(2)),
+        baselineCost: Number(baselineCost.toFixed(2)),
+        pattern,
+        annotation,
+        efficiencyScore: Number(efficiency.toFixed(1)),
+      });
+    }
+
+    const weeklyEfficiency = Number(
+      (
+        trendData.reduce((sum, point) => sum + point.efficiencyScore, 0) /
+        trendData.length
+      ).toFixed(1),
+    );
+
+    return { costTrend: trendData, weeklyEfficiencyScore: weeklyEfficiency };
+  }, [filteredInstances]);
 
   // Get waste level and color based on waste score
   const getWasteLevel = (
@@ -151,7 +310,8 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
             </Card>
           ))}
         </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Skeleton className="h-64" />
           <Skeleton className="h-64" />
           <Skeleton className="h-64" />
         </div>
@@ -175,47 +335,66 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
     );
   }
 
-  const costData = data.costs;
   const costChangePercent =
-    ((costData.projectedMonthlyCost - costData.totalMonthlyCost) /
-      costData.totalMonthlyCost) *
-    100;
+    costMetrics.totalMonthlyCost > 0
+      ? Number(
+          (
+            ((costMetrics.projectedMonthlyCost - costMetrics.totalMonthlyCost) /
+              costMetrics.totalMonthlyCost) *
+            100
+          ).toFixed(1),
+        )
+      : 0;
 
   // Calculate period comparison percentages
   const monthlyChangePercent =
-    ((costData.totalMonthlyCost - costData.totalMonthlyCostPreviousPeriod) /
-      costData.totalMonthlyCostPreviousPeriod) *
-    100;
+    costMetrics.totalMonthlyCostPreviousPeriod > 0
+      ? Number(
+          (
+            ((costMetrics.totalMonthlyCost -
+              costMetrics.totalMonthlyCostPreviousPeriod) /
+              costMetrics.totalMonthlyCostPreviousPeriod) *
+            100
+          ).toFixed(1),
+        )
+      : 0;
 
   const dailyChangePercent =
-    ((costData.dailyBurnRate - costData.dailyBurnRatePreviousPeriod) /
-      costData.dailyBurnRatePreviousPeriod) *
-    100;
+    costMetrics.dailyBurnRatePreviousPeriod > 0
+      ? Number(
+          (
+            ((costMetrics.dailyBurnRate -
+              costMetrics.dailyBurnRatePreviousPeriod) /
+              costMetrics.dailyBurnRatePreviousPeriod) *
+            100
+          ).toFixed(1),
+        )
+      : 0;
 
   // Get waste level information (currently unused)
-  const _wasteLevel = getWasteLevel(costData.wasteScore);
+  const _wasteLevel = getWasteLevel(costMetrics.wasteScore);
 
   return (
     <div className={`space-y-6 mb-8 ${className}`}>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Resource Efficiency - Primary Status Indicator */}
-        <Card className={`${getEfficiencyBackground(costData.wasteScore)}`}>
+        <Card className={`${getEfficiencyBackground(costMetrics.wasteScore)}`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Resource Efficiency
             </CardTitle>
             <Zap
-              className={`h-4 w-4 ${getEfficiencyColor(costData.wasteScore)}`}
+              className={`h-4 w-4 ${getEfficiencyColor(costMetrics.wasteScore)}`}
             />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {100 - costData.wasteScore}%
+              {100 - costMetrics.wasteScore}%
             </div>
             <div className="flex items-center text-xs text-muted-foreground mb-2">
               {getEfficiencyTrend(
-                costData.wasteScore,
-                costData.wasteScorePreviousPeriod,
+                costMetrics.wasteScore,
+                costMetrics.wasteScorePreviousPeriod,
               ) > 0 ? (
                 <TrendingUp className="mr-1 h-3 w-3 text-success" />
               ) : (
@@ -223,14 +402,14 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
               )}
               {Math.abs(
                 getEfficiencyTrend(
-                  costData.wasteScore,
-                  costData.wasteScorePreviousPeriod,
+                  costMetrics.wasteScore,
+                  costMetrics.wasteScorePreviousPeriod,
                 ),
               ).toFixed(1)}
               % vs last month
             </div>
             <div className="text-sm text-muted-foreground">
-              {formatCurrency(costData.wasteAmount)} currently wasted
+              {formatCurrency(costMetrics.wasteAmount)} currently wasted
             </div>
           </CardContent>
         </Card>
@@ -243,7 +422,7 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(costData.totalMonthlyCost)}
+              {formatCurrency(costMetrics.totalMonthlyCost)}
             </div>
             <div className="flex items-center text-xs text-muted-foreground">
               {monthlyChangePercent > 0 ? (
@@ -251,7 +430,7 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
               ) : (
                 <TrendingDown className="mr-1 h-3 w-3 text-success" />
               )}
-              {Math.abs(monthlyChangePercent).toFixed(1)}% vs last month
+              {Math.abs(monthlyChangePercent)}% vs last month
             </div>
           </CardContent>
         </Card>
@@ -264,7 +443,7 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(costData.projectedMonthlyCost)}
+              {formatCurrency(costMetrics.projectedMonthlyCost)}
             </div>
             <div className="flex items-center text-xs text-muted-foreground">
               {costChangePercent > 0 ? (
@@ -272,7 +451,7 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
               ) : (
                 <TrendingDown className="mr-1 h-3 w-3 text-success" />
               )}
-              {Math.abs(costChangePercent).toFixed(1)}% from current
+              {Math.abs(costChangePercent)}% from current
             </div>
           </CardContent>
         </Card>
@@ -285,7 +464,7 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {formatCurrency(costData.dailyBurnRate)}
+              {formatCurrency(costMetrics.dailyBurnRate)}
             </div>
             <div className="flex items-center text-xs text-muted-foreground">
               {dailyChangePercent > 0 ? (
@@ -293,7 +472,7 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
               ) : (
                 <TrendingDown className="mr-1 h-3 w-3 text-success" />
               )}
-              {Math.abs(dailyChangePercent).toFixed(1)}% vs yesterday
+              {Math.abs(dailyChangePercent)}% vs yesterday
             </div>
           </CardContent>
         </Card>
@@ -352,55 +531,12 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
 
         {/* Research Cost Pattern - Root Cause Analysis */}
         <ResearchCostTrend
-          data={costData.costTrend}
-          weeklyEfficiencyScore={costData.weeklyEfficiencyScore}
+          data={costTrend}
+          weeklyEfficiencyScore={weeklyEfficiencyScore}
         />
 
-        {/* Cost Anomalies - Historical Incidents */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Anomalies</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {costData.anomalies.length > 0 ? (
-              <div className="space-y-3">
-                {costData.anomalies.map((anomaly) => (
-                  <div
-                    key={anomaly.date}
-                    className="flex items-center justify-between p-3 rounded-lg border border-destructive/20 bg-destructive/5"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-2 h-2 bg-destructive rounded-full" />
-                      <div>
-                        <p className="text-sm font-medium">
-                          Cost Spike Detected
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(anomaly.date).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm font-semibold text-destructive">
-                        +
-                        {formatCurrency(
-                          anomaly.actualCost - anomaly.expectedCost,
-                        )}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        vs expected
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="flex items-center justify-center h-20 text-muted-foreground">
-                <p className="text-sm">No cost anomalies detected</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        {/* Recent Anomalies - Historical incidents & spikes */}
+        <RecentAnomalies anomalies={costData?.anomalies || []} />
       </div>
     </div>
   );

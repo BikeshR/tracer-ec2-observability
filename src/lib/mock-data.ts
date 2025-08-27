@@ -76,7 +76,11 @@ const generateLargeDataset = () => {
     const instanceType =
       instanceTypes[Math.floor(Math.random() * instanceTypes.length)];
     const region = regions[Math.floor(Math.random() * regions.length)];
-    const team = teams[Math.floor(Math.random() * teams.length)];
+    // Leave some instances without team assignment (10-15% unattributed)
+    const team =
+      Math.random() < 0.85
+        ? teams[Math.floor(Math.random() * teams.length)]
+        : undefined;
     const environment =
       environments[Math.floor(Math.random() * environments.length)];
     const purpose =
@@ -216,7 +220,7 @@ const generateLargeDataset = () => {
         Purpose: purpose,
         Owner: "Research",
         Environment: environment,
-        Team: team,
+        ...(team && { Team: team }),
       },
       efficiencyScore,
       wasteLevel,
@@ -420,15 +424,45 @@ const generateCostData = (): CostData => {
     unattributedCost: Math.round(totalMonthlyCost * 0.12 * 100) / 100, // 12% unattributed
     costTrend: generateResearchWorkflowPattern(dailyBurnRate),
     anomalies: [
+      // High severity spike - Large-scale genomics run (2 days ago)
       {
-        date: "2024-01-18",
-        expectedCost: Math.round(totalMonthlyCost * 0.8 * 100) / 100,
-        actualCost: Math.round(totalMonthlyCost * 1.3 * 100) / 100,
+        date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0],
+        expectedCost: Math.round(dailyBurnRate * 0.85 * 100) / 100,
+        actualCost: Math.round(dailyBurnRate * 1.45 * 100) / 100, // 70% spike
       },
+      // Medium severity spike - Failed auto-shutdown (5 days ago)
       {
-        date: "2024-01-22",
-        expectedCost: Math.round(totalMonthlyCost * 0.95 * 100) / 100,
-        actualCost: Math.round(totalMonthlyCost * 1.15 * 100) / 100,
+        date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0],
+        expectedCost: Math.round(dailyBurnRate * 0.9 * 100) / 100,
+        actualCost: Math.round(dailyBurnRate * 1.22 * 100) / 100, // 36% spike
+      },
+      // Low severity drop - Weekend efficiency (8 days ago)
+      {
+        date: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0],
+        expectedCost: Math.round(dailyBurnRate * 1.0 * 100) / 100,
+        actualCost: Math.round(dailyBurnRate * 0.88 * 100) / 100, // 12% drop
+      },
+      // High severity spike - Runaway compute job (12 days ago)
+      {
+        date: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0],
+        expectedCost: Math.round(dailyBurnRate * 0.95 * 100) / 100,
+        actualCost: Math.round(dailyBurnRate * 1.38 * 100) / 100, // 45% spike
+      },
+      // Medium severity spike - Team onboarding (15 days ago)
+      {
+        date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0],
+        expectedCost: Math.round(dailyBurnRate * 0.92 * 100) / 100,
+        actualCost: Math.round(dailyBurnRate * 1.16 * 100) / 100, // 26% spike
       },
     ],
     weeklyEfficiencyScore: calculateWeeklyEfficiency(

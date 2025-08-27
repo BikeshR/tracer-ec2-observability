@@ -25,7 +25,12 @@ export const useFilteredData = <T extends { team?: string; region?: string }>(
     }
 
     const hasActiveFilters =
-      activeFilters.teams.length > 0 || activeFilters.regions.length > 0;
+      activeFilters.teams.length > 0 ||
+      activeFilters.regions.length > 0 ||
+      activeFilters.wasteLevel.length > 0 ||
+      activeFilters.instanceTypes.length > 0 ||
+      activeFilters.status.length > 0 ||
+      activeFilters.jobIds.length > 0;
     const filteredData = hasActiveFilters ? applyFilters(data) : data;
 
     return {
