@@ -223,15 +223,15 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
 
   const defaultTrigger = (
     <Button variant="outline" size="sm">
-      <Settings className="h-4 w-4 mr-2" />
-      Manage Views
+      <Settings className="h-4 w-4 sm:mr-2" />
+      <span className="hidden sm:inline">Manage Views</span>
     </Button>
   );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger || defaultTrigger}</DialogTrigger>
-      <DialogContent className="sm:max-w-2xl">
+      <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {mode === "create"
@@ -245,11 +245,15 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
         {mode === "list" ? (
           /* List Mode */
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <p className="text-sm text-muted-foreground">
                 Manage your saved filter views
               </p>
-              <Button onClick={handleCreateNew} size="sm">
+              <Button
+                onClick={handleCreateNew}
+                size="sm"
+                className="self-start sm:self-auto"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Create New
               </Button>
@@ -261,9 +265,9 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
               {filterState.filterSets.map((view) => (
                 <div
                   key={view.id}
-                  className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors"
                 >
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center space-x-2">
                       <h4 className="font-medium">{view.name}</h4>
                       {view.isDefault && (
@@ -274,10 +278,10 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                     </div>
                     <div className="flex flex-col space-y-1 mt-1">
                       {/* First row - Teams and Regions */}
-                      <div className="flex items-center space-x-2 flex-wrap">
+                      <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
                         {view.filters.teams.length > 0 && (
-                          <div className="flex items-center space-x-1">
-                            <span className="text-xs text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-1">
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">
                               Teams:
                             </span>
                             {view.filters.teams.map((team) => (
@@ -292,8 +296,8 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                           </div>
                         )}
                         {view.filters.regions.length > 0 && (
-                          <div className="flex items-center space-x-1">
-                            <span className="text-xs text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-1">
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">
                               Regions:
                             </span>
                             {view.filters.regions.map((region) => (
@@ -310,10 +314,10 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                       </div>
 
                       {/* Second row - New filter types */}
-                      <div className="flex items-center space-x-2 flex-wrap">
+                      <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4 flex-wrap">
                         {view.filters.wasteLevel.length > 0 && (
-                          <div className="flex items-center space-x-1">
-                            <span className="text-xs text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-1">
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">
                               Waste:
                             </span>
                             {view.filters.wasteLevel.map((waste) => (
@@ -328,8 +332,8 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                           </div>
                         )}
                         {view.filters.instanceTypes.length > 0 && (
-                          <div className="flex items-center space-x-1">
-                            <span className="text-xs text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-1">
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">
                               Types:
                             </span>
                             {view.filters.instanceTypes.map((type) => (
@@ -344,8 +348,8 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                           </div>
                         )}
                         {view.filters.status.length > 0 && (
-                          <div className="flex items-center space-x-1">
-                            <span className="text-xs text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-1">
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">
                               Status:
                             </span>
                             {view.filters.status.map((status) => (
@@ -360,8 +364,8 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                           </div>
                         )}
                         {view.filters.jobIds.length > 0 && (
-                          <div className="flex items-center space-x-1">
-                            <span className="text-xs text-muted-foreground">
+                          <div className="flex flex-wrap items-center gap-1">
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">
                               Jobs:
                             </span>
                             {view.filters.jobIds.map((jobId) => (
@@ -390,13 +394,14 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                         )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center gap-1 flex-shrink-0 self-start sm:self-center">
                     {!view.isDefault && (
                       <>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleEditView(view)}
+                          className="h-8 w-8 p-0"
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -404,7 +409,7 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                           variant="ghost"
                           size="sm"
                           onClick={() => handleDeleteView(view.id)}
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive h-8 w-8 p-0"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -661,11 +666,15 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
 
             <Separator />
 
-            <div className="flex items-center justify-between">
-              <Button variant="outline" onClick={() => setMode("list")}>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setMode("list")}
+                className="order-2 sm:order-1"
+              >
                 Back
               </Button>
-              <div className="flex space-x-2">
+              <div className="flex flex-col sm:flex-row gap-2 order-1 sm:order-2">
                 <Button
                   variant="outline"
                   onClick={() => {

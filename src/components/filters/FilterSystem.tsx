@@ -10,9 +10,13 @@ interface FilterSystemProps {
 
 const FilterSystem: React.FC<FilterSystemProps> = ({ className = "" }) => {
   return (
-    <div className={`flex items-center justify-between mb-8 ${className}`}>
+    <div
+      className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8 ${className}`}
+    >
       <FilterSelect />
-      <ManageViewsDialog />
+      <div className="hidden sm:block">
+        <ManageViewsDialog />
+      </div>
     </div>
   );
 };
