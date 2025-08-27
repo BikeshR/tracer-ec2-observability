@@ -15,7 +15,13 @@ interface StorageData {
 export const getDefaultFilterState = (): FilterState => ({
   activeFilterSetId: "all-data",
   filterSets: DEFAULT_FILTER_SETS,
-  quickFilters: { teams: [], regions: [] },
+  quickFilters: {
+    teams: [],
+    regions: [],
+    wasteLevel: [],
+    instanceTypes: [],
+    status: [],
+  },
 });
 
 // Save filter state to localStorage
@@ -62,20 +68,42 @@ export const loadFiltersFromStorage = (): FilterState => {
       return getDefaultFilterState();
     }
 
-    // Ensure default filter sets exist (in case user deleted them)
+    // Ensure default filter sets exist and migrate old filter sets
     const storedFilterSets = storageData.filterState.filterSets;
     const storedIds = new Set(storedFilterSets.map((fs) => fs.id));
+
+    // Migrate existing filter sets to new schema
+    const migratedFilterSets = storedFilterSets.map((fs) => ({
+      ...fs,
+      filters: {
+        teams: fs.filters.teams || [],
+        regions: fs.filters.regions || [],
+        wasteLevel: fs.filters.wasteLevel || [],
+        instanceTypes: fs.filters.instanceTypes || [],
+        status: fs.filters.status || [],
+      },
+    }));
 
     // Only add missing default filter sets
     const missingDefaults = DEFAULT_FILTER_SETS.filter(
       (defaultFs) => !storedIds.has(defaultFs.id),
     );
 
-    const mergedFilterSets = [...storedFilterSets, ...missingDefaults];
+    const mergedFilterSets = [...migratedFilterSets, ...missingDefaults];
+
+    // Migrate quickFilters too
+    const migratedQuickFilters = {
+      teams: storageData.filterState.quickFilters?.teams || [],
+      regions: storageData.filterState.quickFilters?.regions || [],
+      wasteLevel: storageData.filterState.quickFilters?.wasteLevel || [],
+      instanceTypes: storageData.filterState.quickFilters?.instanceTypes || [],
+      status: storageData.filterState.quickFilters?.status || [],
+    };
 
     return {
       ...storageData.filterState,
       filterSets: mergedFilterSets,
+      quickFilters: migratedQuickFilters,
     };
   } catch (error) {
     console.warn("Failed to load filters from localStorage:", error);
@@ -112,6 +140,9 @@ export const validateFilterSet = (
     filterSet.filters &&
     typeof filterSet.isDefault === "boolean" &&
     Array.isArray(filterSet.filters.teams) &&
-    Array.isArray(filterSet.filters.regions)
+    Array.isArray(filterSet.filters.regions) &&
+    Array.isArray(filterSet.filters.wasteLevel) &&
+    Array.isArray(filterSet.filters.instanceTypes) &&
+    Array.isArray(filterSet.filters.status)
   );
 };

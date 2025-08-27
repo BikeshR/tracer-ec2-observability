@@ -65,21 +65,74 @@ export const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
     filterState.quickFilters,
   ]);
 
+  // Helper function to categorize instance types
+  const categorizeInstanceType = (instanceType: string): string => {
+    const type = instanceType.toLowerCase();
+    if (type.includes("p3") || type.includes("g4") || type.includes("gpu")) {
+      return "gpu";
+    }
+    if (
+      type.includes("r5") ||
+      type.includes("r6") ||
+      type.includes("x1") ||
+      type.includes("memory")
+    ) {
+      return "memory";
+    }
+    return "cpu"; // Default for t2, t3, m5, c5, etc.
+  };
+
   // Apply filters to data array
-  const applyFilters = <T extends { team?: string; region?: string }>(
+  const applyFilters = <
+    T extends {
+      team?: string;
+      region?: string;
+      wasteLevel?: string;
+      instanceType?: string;
+      state?: string;
+    },
+  >(
     data: T[],
   ): T[] => {
     return data.filter((item) => {
       // Team filter
-      if (activeFilters.teams.length > 0) {
-        if (!item.team || !activeFilters.teams.includes(item.team)) {
+      if ((activeFilters.teams?.length || 0) > 0) {
+        if (!item.team || !activeFilters.teams?.includes(item.team)) {
           return false;
         }
       }
 
       // Region filter
-      if (activeFilters.regions.length > 0) {
-        if (!item.region || !activeFilters.regions.includes(item.region)) {
+      if ((activeFilters.regions?.length || 0) > 0) {
+        if (!item.region || !activeFilters.regions?.includes(item.region)) {
+          return false;
+        }
+      }
+
+      // Waste Level filter
+      if ((activeFilters.wasteLevel?.length || 0) > 0) {
+        if (
+          !item.wasteLevel ||
+          !activeFilters.wasteLevel?.includes(item.wasteLevel)
+        ) {
+          return false;
+        }
+      }
+
+      // Instance Type filter (categorized)
+      if ((activeFilters.instanceTypes?.length || 0) > 0) {
+        if (!item.instanceType) {
+          return false;
+        }
+        const category = categorizeInstanceType(item.instanceType);
+        if (!activeFilters.instanceTypes?.includes(category)) {
+          return false;
+        }
+      }
+
+      // Status filter
+      if ((activeFilters.status?.length || 0) > 0) {
+        if (!item.state || !activeFilters.status?.includes(item.state)) {
           return false;
         }
       }
@@ -103,6 +156,27 @@ export const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
       ...prev,
       filterSets: [...prev.filterSets, newFilterSet],
       activeFilterSetId: newFilterSet.id,
+    }));
+  };
+
+  // Update existing filter set
+  const updateFilterSet = (
+    id: string,
+    name: string,
+    filters: FilterSet["filters"],
+  ) => {
+    setFilterState((prev) => ({
+      ...prev,
+      filterSets: prev.filterSets.map((fs) =>
+        fs.id === id
+          ? {
+              ...fs,
+              name,
+              filters,
+              lastUsed: new Date().toISOString(),
+            }
+          : fs,
+      ),
     }));
   };
 
@@ -160,7 +234,13 @@ export const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
     setFilterState((prev) => ({
       ...prev,
       activeFilterSetId: "all-data",
-      quickFilters: { teams: [], regions: [] },
+      quickFilters: {
+        teams: [],
+        regions: [],
+        wasteLevel: [],
+        instanceTypes: [],
+        status: [],
+      },
     }));
   };
 
@@ -170,6 +250,7 @@ export const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
     activeFilters,
     applyFilters,
     createFilterSet,
+    updateFilterSet,
     deleteFilterSet,
     setActiveFilterSet,
     updateQuickFilters,

@@ -30,7 +30,8 @@ interface ManageViewsDialogProps {
 }
 
 const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
-  const { filterState, createFilterSet, deleteFilterSet } = useFilters();
+  const { filterState, createFilterSet, updateFilterSet, deleteFilterSet } =
+    useFilters();
   const [open, setOpen] = useState(false);
   const [mode, setMode] = useState<"create" | "list">("list");
   const [editingView, setEditingView] = useState<FilterSet | null>(null);
@@ -39,8 +40,16 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
   const [viewName, setViewName] = useState("");
   const [selectedTeams, setSelectedTeams] = useState<string[]>([]);
   const [selectedRegions, setSelectedRegions] = useState<string[]>([]);
+  const [selectedWasteLevel, setSelectedWasteLevel] = useState<string[]>([]);
+  const [selectedInstanceTypes, setSelectedInstanceTypes] = useState<string[]>(
+    [],
+  );
+  const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
   const [teamSelectValue, setTeamSelectValue] = useState("");
   const [regionSelectValue, setRegionSelectValue] = useState("");
+  const [wasteLevelSelectValue, setWasteLevelSelectValue] = useState("");
+  const [instanceTypeSelectValue, setInstanceTypeSelectValue] = useState("");
+  const [statusSelectValue, setStatusSelectValue] = useState("");
 
   // Reset form when dialog closes
   useEffect(() => {
@@ -50,8 +59,14 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
       setViewName("");
       setSelectedTeams([]);
       setSelectedRegions([]);
+      setSelectedWasteLevel([]);
+      setSelectedInstanceTypes([]);
+      setSelectedStatus([]);
       setTeamSelectValue("");
       setRegionSelectValue("");
+      setWasteLevelSelectValue("");
+      setInstanceTypeSelectValue("");
+      setStatusSelectValue("");
     }
   }, [open]);
 
@@ -60,18 +75,30 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
     setViewName("");
     setSelectedTeams([]);
     setSelectedRegions([]);
+    setSelectedWasteLevel([]);
+    setSelectedInstanceTypes([]);
+    setSelectedStatus([]);
     setTeamSelectValue("");
     setRegionSelectValue("");
+    setWasteLevelSelectValue("");
+    setInstanceTypeSelectValue("");
+    setStatusSelectValue("");
   };
 
   const handleEditView = (view: FilterSet) => {
     setEditingView(view);
     setMode("create");
     setViewName(view.name);
-    setSelectedTeams(view.filters.teams);
-    setSelectedRegions(view.filters.regions);
+    setSelectedTeams(view.filters.teams || []);
+    setSelectedRegions(view.filters.regions || []);
+    setSelectedWasteLevel(view.filters.wasteLevel || []);
+    setSelectedInstanceTypes(view.filters.instanceTypes || []);
+    setSelectedStatus(view.filters.status || []);
     setTeamSelectValue("");
     setRegionSelectValue("");
+    setWasteLevelSelectValue("");
+    setInstanceTypeSelectValue("");
+    setStatusSelectValue("");
   };
 
   const handleDeleteView = (viewId: string) => {
@@ -87,11 +114,14 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
     const filters = {
       teams: selectedTeams,
       regions: selectedRegions,
+      wasteLevel: selectedWasteLevel,
+      instanceTypes: selectedInstanceTypes,
+      status: selectedStatus,
     };
 
     if (editingView) {
-      // For editing, we'd need an update function - for now just create new
-      createFilterSet(viewName.trim(), filters);
+      // Update existing filter set
+      updateFilterSet(editingView.id, viewName.trim(), filters);
     } else {
       createFilterSet(viewName.trim(), filters);
     }
@@ -101,8 +131,14 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
     setViewName("");
     setSelectedTeams([]);
     setSelectedRegions([]);
+    setSelectedWasteLevel([]);
+    setSelectedInstanceTypes([]);
+    setSelectedStatus([]);
     setTeamSelectValue("");
     setRegionSelectValue("");
+    setWasteLevelSelectValue("");
+    setInstanceTypeSelectValue("");
+    setStatusSelectValue("");
     setEditingView(null);
   };
 
@@ -126,6 +162,41 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
 
   const removeRegion = (region: string) => {
     setSelectedRegions(selectedRegions.filter((r) => r !== region));
+  };
+
+  const addWasteLevel = (wasteLevel: string) => {
+    if (!selectedWasteLevel.includes(wasteLevel)) {
+      setSelectedWasteLevel([...selectedWasteLevel, wasteLevel]);
+    }
+    setWasteLevelSelectValue("");
+  };
+
+  const removeWasteLevel = (wasteLevel: string) => {
+    setSelectedWasteLevel(selectedWasteLevel.filter((w) => w !== wasteLevel));
+  };
+
+  const addInstanceType = (instanceType: string) => {
+    if (!selectedInstanceTypes.includes(instanceType)) {
+      setSelectedInstanceTypes([...selectedInstanceTypes, instanceType]);
+    }
+    setInstanceTypeSelectValue("");
+  };
+
+  const removeInstanceType = (instanceType: string) => {
+    setSelectedInstanceTypes(
+      selectedInstanceTypes.filter((i) => i !== instanceType),
+    );
+  };
+
+  const addStatus = (status: string) => {
+    if (!selectedStatus.includes(status)) {
+      setSelectedStatus([...selectedStatus, status]);
+    }
+    setStatusSelectValue("");
+  };
+
+  const removeStatus = (status: string) => {
+    setSelectedStatus(selectedStatus.filter((s) => s !== status));
   };
 
   const defaultTrigger = (
@@ -179,41 +250,101 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                         </Badge>
                       )}
                     </div>
-                    <div className="flex items-center space-x-2 mt-1">
-                      {view.filters.teams.length > 0 && (
-                        <div className="flex items-center space-x-1">
-                          <span className="text-xs text-muted-foreground">
-                            Teams:
-                          </span>
-                          {view.filters.teams.map((team) => (
-                            <Badge
-                              key={team}
-                              variant="outline"
-                              className="text-xs border-border"
-                            >
-                              {team}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
-                      {view.filters.regions.length > 0 && (
-                        <div className="flex items-center space-x-1">
-                          <span className="text-xs text-muted-foreground">
-                            Regions:
-                          </span>
-                          {view.filters.regions.map((region) => (
-                            <Badge
-                              key={region}
-                              variant="outline"
-                              className="text-xs border-border"
-                            >
-                              {region}
-                            </Badge>
-                          ))}
-                        </div>
-                      )}
+                    <div className="flex flex-col space-y-1 mt-1">
+                      {/* First row - Teams and Regions */}
+                      <div className="flex items-center space-x-2 flex-wrap">
+                        {view.filters.teams.length > 0 && (
+                          <div className="flex items-center space-x-1">
+                            <span className="text-xs text-muted-foreground">
+                              Teams:
+                            </span>
+                            {view.filters.teams.map((team) => (
+                              <Badge
+                                key={team}
+                                variant="outline"
+                                className="text-xs border-border"
+                              >
+                                {team}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        {view.filters.regions.length > 0 && (
+                          <div className="flex items-center space-x-1">
+                            <span className="text-xs text-muted-foreground">
+                              Regions:
+                            </span>
+                            {view.filters.regions.map((region) => (
+                              <Badge
+                                key={region}
+                                variant="outline"
+                                className="text-xs border-border"
+                              >
+                                {region}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Second row - New filter types */}
+                      <div className="flex items-center space-x-2 flex-wrap">
+                        {view.filters.wasteLevel.length > 0 && (
+                          <div className="flex items-center space-x-1">
+                            <span className="text-xs text-muted-foreground">
+                              Waste:
+                            </span>
+                            {view.filters.wasteLevel.map((waste) => (
+                              <Badge
+                                key={waste}
+                                variant="outline"
+                                className="text-xs border-border"
+                              >
+                                {waste}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        {view.filters.instanceTypes.length > 0 && (
+                          <div className="flex items-center space-x-1">
+                            <span className="text-xs text-muted-foreground">
+                              Types:
+                            </span>
+                            {view.filters.instanceTypes.map((type) => (
+                              <Badge
+                                key={type}
+                                variant="outline"
+                                className="text-xs border-border"
+                              >
+                                {type}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                        {view.filters.status.length > 0 && (
+                          <div className="flex items-center space-x-1">
+                            <span className="text-xs text-muted-foreground">
+                              Status:
+                            </span>
+                            {view.filters.status.map((status) => (
+                              <Badge
+                                key={status}
+                                variant="outline"
+                                className="text-xs border-border"
+                              >
+                                {status}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* No filters message */}
                       {view.filters.teams.length === 0 &&
-                        view.filters.regions.length === 0 && (
+                        view.filters.regions.length === 0 &&
+                        view.filters.wasteLevel.length === 0 &&
+                        view.filters.instanceTypes.length === 0 &&
+                        view.filters.status.length === 0 && (
                           <span className="text-xs text-muted-foreground">
                             No filters
                           </span>
@@ -333,6 +464,124 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                   )}
                 </div>
               </div>
+
+              <div>
+                <div className="text-sm font-medium mb-2 block">
+                  Waste Level
+                </div>
+                <div className="space-y-3">
+                  <Select
+                    value={wasteLevelSelectValue}
+                    onValueChange={addWasteLevel}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Add a waste level..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FILTER_OPTIONS.wasteLevel
+                        .filter((waste) => !selectedWasteLevel.includes(waste))
+                        .map((waste) => (
+                          <SelectItem key={waste} value={waste}>
+                            {waste}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+
+                  {selectedWasteLevel.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedWasteLevel.map((waste) => (
+                        <Badge
+                          key={waste}
+                          variant="secondary"
+                          className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                          onClick={() => removeWasteLevel(waste)}
+                        >
+                          {waste}
+                          <X className="ml-1 h-3 w-3" />
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-sm font-medium mb-2 block">
+                  Instance Types
+                </div>
+                <div className="space-y-3">
+                  <Select
+                    value={instanceTypeSelectValue}
+                    onValueChange={addInstanceType}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Add an instance type..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FILTER_OPTIONS.instanceTypes
+                        .filter((type) => !selectedInstanceTypes.includes(type))
+                        .map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {type}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+
+                  {selectedInstanceTypes.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedInstanceTypes.map((type) => (
+                        <Badge
+                          key={type}
+                          variant="secondary"
+                          className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                          onClick={() => removeInstanceType(type)}
+                        >
+                          {type}
+                          <X className="ml-1 h-3 w-3" />
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <div className="text-sm font-medium mb-2 block">Status</div>
+                <div className="space-y-3">
+                  <Select value={statusSelectValue} onValueChange={addStatus}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Add a status..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FILTER_OPTIONS.status
+                        .filter((status) => !selectedStatus.includes(status))
+                        .map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {status}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+
+                  {selectedStatus.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedStatus.map((status) => (
+                        <Badge
+                          key={status}
+                          variant="secondary"
+                          className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                          onClick={() => removeStatus(status)}
+                        >
+                          {status}
+                          <X className="ml-1 h-3 w-3" />
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             <Separator />
@@ -348,8 +597,14 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                     setViewName("");
                     setSelectedTeams([]);
                     setSelectedRegions([]);
+                    setSelectedWasteLevel([]);
+                    setSelectedInstanceTypes([]);
+                    setSelectedStatus([]);
                     setTeamSelectValue("");
                     setRegionSelectValue("");
+                    setWasteLevelSelectValue("");
+                    setInstanceTypeSelectValue("");
+                    setStatusSelectValue("");
                   }}
                 >
                   Clear

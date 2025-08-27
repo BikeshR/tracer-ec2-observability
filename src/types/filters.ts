@@ -8,6 +8,9 @@ export interface FilterSet {
   filters: {
     teams: string[]; // ["Chen Lab", "Rodriguez Lab"]
     regions: string[]; // ["us-east-1", "us-west-2"]
+    wasteLevel: string[]; // ["high", "medium", "low"]
+    instanceTypes: string[]; // ["gpu", "cpu", "memory"]
+    status: string[]; // ["running", "stopped", "pending", "stopping", "terminated"]
   };
   createdAt: string;
   lastUsed: string;
@@ -24,10 +27,23 @@ export interface FilterContextType {
   filterState: FilterState;
   setFilterState: React.Dispatch<React.SetStateAction<FilterState>>;
   activeFilters: FilterSet["filters"];
-  applyFilters: <T extends { team?: string; region?: string }>(
+  applyFilters: <
+    T extends {
+      team?: string;
+      region?: string;
+      wasteLevel?: string;
+      instanceType?: string;
+      state?: string;
+    },
+  >(
     data: T[],
   ) => T[];
   createFilterSet: (name: string, filters: FilterSet["filters"]) => void;
+  updateFilterSet: (
+    id: string,
+    name: string,
+    filters: FilterSet["filters"],
+  ) => void;
   deleteFilterSet: (id: string) => void;
   setActiveFilterSet: (id: string) => void;
   updateQuickFilters: (filters: Partial<FilterSet["filters"]>) => void;
@@ -40,7 +56,13 @@ export const DEFAULT_FILTER_SETS: FilterSet[] = [
     id: "all-data",
     name: "All Data",
     isDefault: true,
-    filters: { teams: [], regions: [] },
+    filters: {
+      teams: [],
+      regions: [],
+      wasteLevel: [],
+      instanceTypes: [],
+      status: [],
+    },
     createdAt: "2024-01-01T00:00:00.000Z",
     lastUsed: "2024-01-01T00:00:00.000Z",
   },
@@ -48,7 +70,13 @@ export const DEFAULT_FILTER_SETS: FilterSet[] = [
     id: "my-lab",
     name: "My Lab",
     isDefault: false,
-    filters: { teams: ["Chen Lab"], regions: [] },
+    filters: {
+      teams: ["Chen Genomics Laboratory"],
+      regions: [],
+      wasteLevel: [],
+      instanceTypes: [],
+      status: [],
+    },
     createdAt: "2024-01-01T00:00:00.000Z",
     lastUsed: "2024-01-01T00:00:00.000Z",
   },
@@ -56,7 +84,13 @@ export const DEFAULT_FILTER_SETS: FilterSet[] = [
     id: "us-east",
     name: "US East",
     isDefault: false,
-    filters: { teams: [], regions: ["us-east-1"] },
+    filters: {
+      teams: [],
+      regions: ["us-east-1"],
+      wasteLevel: [],
+      instanceTypes: [],
+      status: [],
+    },
     createdAt: "2024-01-01T00:00:00.000Z",
     lastUsed: "2024-01-01T00:00:00.000Z",
   },
@@ -65,14 +99,19 @@ export const DEFAULT_FILTER_SETS: FilterSet[] = [
 // Available options for filters
 export const FILTER_OPTIONS = {
   teams: [
-    "Chen Lab",
-    "Rodriguez Lab",
-    "Watson Lab",
-    "Bioinformatics Core",
-    "Smith Lab",
-    "Johnson Lab",
+    "Chen Genomics Laboratory",
+    "Rodriguez Bioinformatics Core",
+    "Watson Computational Biology Unit",
+    "Anderson Proteomics Research Center",
+    "Johnson Molecular Dynamics Lab",
+    "Williams Data Science Institute",
+    "Brown Systems Biology Laboratory",
+    "Davis Structural Biology Unit",
   ],
-  regions: ["us-east-1", "us-west-2", "eu-west-1", "ap-southeast-2"],
+  regions: ["us-east-1", "us-west-2", "eu-west-1"],
+  wasteLevel: ["high", "medium", "low"],
+  instanceTypes: ["gpu", "cpu", "memory"],
+  status: ["running", "stopped", "pending", "stopping", "terminated"],
 };
 
 // localStorage configuration
