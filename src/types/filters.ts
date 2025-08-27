@@ -11,6 +11,7 @@ export interface FilterSet {
     wasteLevel: string[]; // ["high", "medium", "low"]
     instanceTypes: string[]; // ["gpu", "cpu", "memory"]
     status: string[]; // ["running", "stopped", "pending", "stopping", "terminated"]
+    jobIds: string[]; // ["genome-assembly-2024-03", "rnaseq-pipeline-march"]
   };
   createdAt: string;
   lastUsed: string;
@@ -34,6 +35,7 @@ export interface FilterContextType {
       wasteLevel?: string;
       instanceType?: string;
       state?: string;
+      jobId?: string;
     },
   >(
     data: T[],
@@ -62,6 +64,7 @@ export const DEFAULT_FILTER_SETS: FilterSet[] = [
       wasteLevel: [],
       instanceTypes: [],
       status: [],
+      jobIds: [],
     },
     createdAt: "2024-01-01T00:00:00.000Z",
     lastUsed: "2024-01-01T00:00:00.000Z",
@@ -76,6 +79,7 @@ export const DEFAULT_FILTER_SETS: FilterSet[] = [
       wasteLevel: [],
       instanceTypes: [],
       status: [],
+      jobIds: [],
     },
     createdAt: "2024-01-01T00:00:00.000Z",
     lastUsed: "2024-01-01T00:00:00.000Z",
@@ -90,6 +94,7 @@ export const DEFAULT_FILTER_SETS: FilterSet[] = [
       wasteLevel: [],
       instanceTypes: [],
       status: [],
+      jobIds: [],
     },
     createdAt: "2024-01-01T00:00:00.000Z",
     lastUsed: "2024-01-01T00:00:00.000Z",
@@ -112,6 +117,24 @@ export const FILTER_OPTIONS = {
   wasteLevel: ["high", "medium", "low"],
   instanceTypes: ["gpu", "cpu", "memory"],
   status: ["running", "stopped", "pending", "stopping", "terminated"],
+  jobIds: [
+    "genome-assembly-2024-03",
+    "rnaseq-pipeline-march",
+    "variant-calling-cohort-a",
+    "ml-training-drug-discovery",
+    "protein-folding-sim-v2",
+    "dna-sequencing-batch-001",
+    "transcriptome-analysis-liver",
+    "covid-variant-analysis",
+    "cancer-biomarker-study",
+    "metabolomics-pathway-map",
+    "structural-biology-crystal",
+    "pharmacokinetics-model",
+    "single-cell-rna-seq",
+    "chip-seq-histone-marks",
+    "gwas-diabetes-cohort",
+    "proteome-mass-spec",
+  ],
 };
 
 // localStorage configuration

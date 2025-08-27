@@ -45,11 +45,13 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
     [],
   );
   const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
+  const [selectedJobIds, setSelectedJobIds] = useState<string[]>([]);
   const [teamSelectValue, setTeamSelectValue] = useState("");
   const [regionSelectValue, setRegionSelectValue] = useState("");
   const [wasteLevelSelectValue, setWasteLevelSelectValue] = useState("");
   const [instanceTypeSelectValue, setInstanceTypeSelectValue] = useState("");
   const [statusSelectValue, setStatusSelectValue] = useState("");
+  const [jobIdSelectValue, setJobIdSelectValue] = useState("");
 
   // Reset form when dialog closes
   useEffect(() => {
@@ -62,11 +64,13 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
       setSelectedWasteLevel([]);
       setSelectedInstanceTypes([]);
       setSelectedStatus([]);
+      setSelectedJobIds([]);
       setTeamSelectValue("");
       setRegionSelectValue("");
       setWasteLevelSelectValue("");
       setInstanceTypeSelectValue("");
       setStatusSelectValue("");
+      setJobIdSelectValue("");
     }
   }, [open]);
 
@@ -78,11 +82,13 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
     setSelectedWasteLevel([]);
     setSelectedInstanceTypes([]);
     setSelectedStatus([]);
+    setSelectedJobIds([]);
     setTeamSelectValue("");
     setRegionSelectValue("");
     setWasteLevelSelectValue("");
     setInstanceTypeSelectValue("");
     setStatusSelectValue("");
+    setJobIdSelectValue("");
   };
 
   const handleEditView = (view: FilterSet) => {
@@ -94,11 +100,13 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
     setSelectedWasteLevel(view.filters.wasteLevel || []);
     setSelectedInstanceTypes(view.filters.instanceTypes || []);
     setSelectedStatus(view.filters.status || []);
+    setSelectedJobIds(view.filters.jobIds || []);
     setTeamSelectValue("");
     setRegionSelectValue("");
     setWasteLevelSelectValue("");
     setInstanceTypeSelectValue("");
     setStatusSelectValue("");
+    setJobIdSelectValue("");
   };
 
   const handleDeleteView = (viewId: string) => {
@@ -117,6 +125,7 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
       wasteLevel: selectedWasteLevel,
       instanceTypes: selectedInstanceTypes,
       status: selectedStatus,
+      jobIds: selectedJobIds,
     };
 
     if (editingView) {
@@ -134,11 +143,13 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
     setSelectedWasteLevel([]);
     setSelectedInstanceTypes([]);
     setSelectedStatus([]);
+    setSelectedJobIds([]);
     setTeamSelectValue("");
     setRegionSelectValue("");
     setWasteLevelSelectValue("");
     setInstanceTypeSelectValue("");
     setStatusSelectValue("");
+    setJobIdSelectValue("");
     setEditingView(null);
   };
 
@@ -197,6 +208,17 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
 
   const removeStatus = (status: string) => {
     setSelectedStatus(selectedStatus.filter((s) => s !== status));
+  };
+
+  const addJobId = (jobId: string) => {
+    if (!selectedJobIds.includes(jobId)) {
+      setSelectedJobIds([...selectedJobIds, jobId]);
+    }
+    setJobIdSelectValue("");
+  };
+
+  const removeJobId = (jobId: string) => {
+    setSelectedJobIds(selectedJobIds.filter((j) => j !== jobId));
   };
 
   const defaultTrigger = (
@@ -337,6 +359,22 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                             ))}
                           </div>
                         )}
+                        {view.filters.jobIds.length > 0 && (
+                          <div className="flex items-center space-x-1">
+                            <span className="text-xs text-muted-foreground">
+                              Jobs:
+                            </span>
+                            {view.filters.jobIds.map((jobId) => (
+                              <Badge
+                                key={jobId}
+                                variant="outline"
+                                className="text-xs border-border"
+                              >
+                                {jobId}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       {/* No filters message */}
@@ -344,7 +382,8 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                         view.filters.regions.length === 0 &&
                         view.filters.wasteLevel.length === 0 &&
                         view.filters.instanceTypes.length === 0 &&
-                        view.filters.status.length === 0 && (
+                        view.filters.status.length === 0 &&
+                        view.filters.jobIds.length === 0 && (
                           <span className="text-xs text-muted-foreground">
                             No filters
                           </span>
@@ -582,6 +621,42 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                   )}
                 </div>
               </div>
+
+              <div>
+                <div className="text-sm font-medium mb-2 block">Job ID</div>
+                <div className="space-y-3">
+                  <Select value={jobIdSelectValue} onValueChange={addJobId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Add a job ID..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FILTER_OPTIONS.jobIds
+                        .filter((jobId) => !selectedJobIds.includes(jobId))
+                        .map((jobId) => (
+                          <SelectItem key={jobId} value={jobId}>
+                            {jobId}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+
+                  {selectedJobIds.length > 0 && (
+                    <div className="flex flex-wrap gap-2">
+                      {selectedJobIds.map((jobId) => (
+                        <Badge
+                          key={jobId}
+                          variant="secondary"
+                          className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
+                          onClick={() => removeJobId(jobId)}
+                        >
+                          {jobId}
+                          <X className="ml-1 h-3 w-3" />
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
 
             <Separator />
@@ -600,11 +675,13 @@ const ManageViewsDialog: React.FC<ManageViewsDialogProps> = ({ trigger }) => {
                     setSelectedWasteLevel([]);
                     setSelectedInstanceTypes([]);
                     setSelectedStatus([]);
+                    setSelectedJobIds([]);
                     setTeamSelectValue("");
                     setRegionSelectValue("");
                     setWasteLevelSelectValue("");
                     setInstanceTypeSelectValue("");
                     setStatusSelectValue("");
+                    setJobIdSelectValue("");
                   }}
                 >
                   Clear

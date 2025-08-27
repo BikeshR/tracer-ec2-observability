@@ -21,6 +21,7 @@ export const getDefaultFilterState = (): FilterState => ({
     wasteLevel: [],
     instanceTypes: [],
     status: [],
+    jobIds: [],
   },
 });
 
@@ -81,6 +82,7 @@ export const loadFiltersFromStorage = (): FilterState => {
         wasteLevel: fs.filters.wasteLevel || [],
         instanceTypes: fs.filters.instanceTypes || [],
         status: fs.filters.status || [],
+        jobIds: fs.filters.jobIds || [],
       },
     }));
 
@@ -98,6 +100,7 @@ export const loadFiltersFromStorage = (): FilterState => {
       wasteLevel: storageData.filterState.quickFilters?.wasteLevel || [],
       instanceTypes: storageData.filterState.quickFilters?.instanceTypes || [],
       status: storageData.filterState.quickFilters?.status || [],
+      jobIds: storageData.filterState.quickFilters?.jobIds || [],
     };
 
     return {
@@ -143,6 +146,7 @@ export const validateFilterSet = (
     Array.isArray(filterSet.filters.regions) &&
     Array.isArray(filterSet.filters.wasteLevel) &&
     Array.isArray(filterSet.filters.instanceTypes) &&
-    Array.isArray(filterSet.filters.status)
+    Array.isArray(filterSet.filters.status) &&
+    Array.isArray(filterSet.filters.jobIds)
   );
 };

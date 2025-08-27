@@ -90,6 +90,7 @@ export const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
       wasteLevel?: string;
       instanceType?: string;
       state?: string;
+      jobId?: string;
     },
   >(
     data: T[],
@@ -133,6 +134,13 @@ export const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
       // Status filter
       if ((activeFilters.status?.length || 0) > 0) {
         if (!item.state || !activeFilters.status?.includes(item.state)) {
+          return false;
+        }
+      }
+
+      // Job ID filter
+      if ((activeFilters.jobIds?.length || 0) > 0) {
+        if (!item.jobId || !activeFilters.jobIds?.includes(item.jobId)) {
           return false;
         }
       }
@@ -240,6 +248,7 @@ export const FilterProvider: React.FC<FilterProviderProps> = ({ children }) => {
         wasteLevel: [],
         instanceTypes: [],
         status: [],
+        jobIds: [],
       },
     }));
   };

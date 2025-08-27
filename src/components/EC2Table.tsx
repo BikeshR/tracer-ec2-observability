@@ -46,7 +46,8 @@ type SortField =
   | "costPerHour"
   | "state"
   | "efficiencyScore"
-  | "wasteLevel";
+  | "wasteLevel"
+  | "jobId";
 type SortDirection = "asc" | "desc";
 
 export default function EC2Table() {
@@ -154,6 +155,10 @@ export default function EC2Table() {
               case "efficiencyScore":
                 aValue = a.efficiencyScore;
                 bValue = b.efficiencyScore;
+                break;
+              case "jobId":
+                aValue = a.jobId || "";
+                bValue = b.jobId || "";
                 break;
               default:
                 aValue = 0;
@@ -422,6 +427,21 @@ export default function EC2Table() {
                       ))}
                   </Button>
                 </TableHead>
+                <TableHead className="w-[180px]">
+                  <Button
+                    variant="ghost"
+                    onClick={() => handleSort("jobId")}
+                    className="h-auto px-2 py-1 font-medium hover:bg-transparent hover:text-muted-foreground justify-start"
+                  >
+                    Job
+                    {sortField === "jobId" &&
+                      (sortDirection === "asc" ? (
+                        <ChevronUp className="ml-1 h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="ml-1 h-4 w-4" />
+                      ))}
+                  </Button>
+                </TableHead>
                 <TableHead>
                   <Button
                     variant="ghost"
@@ -563,6 +583,24 @@ export default function EC2Table() {
                           {instance.region}
                         </div>
                       </div>
+                    </TableCell>
+
+                    {/* Job Info */}
+                    <TableCell>
+                      {instance.jobId ? (
+                        <div className="flex flex-col">
+                          <Badge
+                            variant="outline"
+                            className="w-fit bg-blue-500/5 text-blue-700 border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-800"
+                          >
+                            {instance.jobId}
+                          </Badge>
+                        </div>
+                      ) : (
+                        <div className="text-xs text-muted-foreground italic">
+                          No job assigned
+                        </div>
+                      )}
                     </TableCell>
 
                     {/* CPU Utilization */}

@@ -84,6 +84,8 @@ const FilterSelect: React.FC<FilterSelectProps> = ({ className = "" }) => {
                         `${filterSet.filters.instanceTypes.length} types`,
                       (filterSet.filters.status?.length || 0) > 0 &&
                         `${filterSet.filters.status.length} status`,
+                      (filterSet.filters.jobIds?.length || 0) > 0 &&
+                        `${filterSet.filters.jobIds.length} jobs`,
                     ]
                       .filter(Boolean)
                       .join(", ")}
@@ -102,7 +104,8 @@ const FilterSelect: React.FC<FilterSelectProps> = ({ className = "" }) => {
           (activeFilterSet.filters.regions?.length || 0) > 0 ||
           (activeFilterSet.filters.wasteLevel?.length || 0) > 0 ||
           (activeFilterSet.filters.instanceTypes?.length || 0) > 0 ||
-          (activeFilterSet.filters.status?.length || 0) > 0) && (
+          (activeFilterSet.filters.status?.length || 0) > 0 ||
+          (activeFilterSet.filters.jobIds?.length || 0) > 0) && (
           <div className="flex items-center space-x-2 text-sm text-muted-foreground flex-wrap">
             <span>Active:</span>
             {(activeFilterSet.filters.teams?.length || 0) > 0 && (
@@ -128,6 +131,11 @@ const FilterSelect: React.FC<FilterSelectProps> = ({ className = "" }) => {
             {(activeFilterSet.filters.status?.length || 0) > 0 && (
               <span className="px-2 py-1 bg-secondary/50 text-secondary-foreground rounded-md text-xs">
                 Status: {activeFilterSet.filters.status?.join(", ")}
+              </span>
+            )}
+            {(activeFilterSet.filters.jobIds?.length || 0) > 0 && (
+              <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-xs">
+                Jobs: {activeFilterSet.filters.jobIds?.join(", ")}
               </span>
             )}
           </div>

@@ -9,6 +9,7 @@ export interface EC2Instance {
   region: string;
   // Filter properties for the filter system
   team?: string;
+  jobId?: string; // Scientific job identifier for bioinformatics workflows
   // Metrics (will be real CloudWatch data later)
   cpuUtilization: number;
   memoryUtilization: number;
@@ -171,6 +172,28 @@ const generateLargeDataset = () => {
 
     const serverName = `Tracer-${purpose.replace(/\s+/g, "").substring(0, 12)}-${String(i).padStart(2, "0")}`;
 
+    // Assign realistic bioinformatics job IDs based on purpose and team
+    const availableJobIds = [
+      "genome-assembly-2024-03",
+      "rnaseq-pipeline-march",
+      "variant-calling-cohort-a",
+      "ml-training-drug-discovery",
+      "protein-folding-sim-v2",
+      "dna-sequencing-batch-001",
+      "transcriptome-analysis-liver",
+      "covid-variant-analysis",
+      "cancer-biomarker-study",
+      "metabolomics-pathway-map",
+      "structural-biology-crystal",
+      "pharmacokinetics-model",
+      "single-cell-rna-seq",
+      "chip-seq-histone-marks",
+      "gwas-diabetes-cohort",
+      "proteome-mass-spec",
+    ];
+    const jobId =
+      availableJobIds[Math.floor(Math.random() * availableJobIds.length)];
+
     instances.push({
       instanceId: `i-${Math.random().toString(36).substring(2, 15)}`,
       name: serverName,
@@ -179,6 +202,7 @@ const generateLargeDataset = () => {
       launchTime: launchDate.toISOString(),
       region,
       team,
+      jobId,
       cpuUtilization: Number(cpuUtil.toFixed(1)),
       memoryUtilization: Number(memUtil.toFixed(1)),
       gpuUtilization: Number(gpuUtil.toFixed(1)),
@@ -512,6 +536,7 @@ export interface AttributionData {
     byEnvironment: AttributionBreakdown[];
     byInstanceType: AttributionBreakdown[];
     byRegion: AttributionBreakdown[];
+    byJob: AttributionBreakdown[];
   };
   timeRange: {
     start: string;
@@ -692,6 +717,51 @@ const generateAttributionBreakdowns = () => {
     { category: "eu-west-1", cost: 384.72, percentage: 10.0, instanceCount: 2 },
   ];
 
+  const byJob = [
+    {
+      category: "genome-assembly-2024-03",
+      cost: 892.45,
+      percentage: 23.2,
+      instanceCount: 6,
+    },
+    {
+      category: "rnaseq-pipeline-march",
+      cost: 731.23,
+      percentage: 19.0,
+      instanceCount: 4,
+    },
+    {
+      category: "variant-calling-cohort-a",
+      cost: 654.87,
+      percentage: 17.0,
+      instanceCount: 5,
+    },
+    {
+      category: "ml-training-drug-discovery",
+      cost: 576.44,
+      percentage: 15.0,
+      instanceCount: 3,
+    },
+    {
+      category: "protein-folding-sim-v2",
+      cost: 423.16,
+      percentage: 11.0,
+      instanceCount: 4,
+    },
+    {
+      category: "dna-sequencing-batch-001",
+      cost: 346.53,
+      percentage: 9.0,
+      instanceCount: 3,
+    },
+    {
+      category: "transcriptome-analysis-liver",
+      cost: 222.53,
+      percentage: 5.8,
+      instanceCount: 2,
+    },
+  ];
+
   // Simplified attribution metrics
   const attributedCost = 3385.08; // 88% of total
   const unaccountedCost = 462.13; // 12% unaccounted
@@ -740,6 +810,7 @@ const generateAttributionBreakdowns = () => {
       byEnvironment,
       byInstanceType,
       byRegion,
+      byJob,
     },
     timeRange: {
       start: "2024-08-01",

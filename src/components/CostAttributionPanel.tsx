@@ -47,7 +47,8 @@ type BreakdownType =
   | "byProject"
   | "byEnvironment"
   | "byInstanceType"
-  | "byRegion";
+  | "byRegion"
+  | "byJob";
 
 const BREAKDOWN_LABELS = {
   byTeam: "Research Teams",
@@ -55,6 +56,7 @@ const BREAKDOWN_LABELS = {
   byEnvironment: "Environments",
   byInstanceType: "Instance Types",
   byRegion: "AWS Regions",
+  byJob: "Computational Jobs",
 };
 
 export default function CostAttributionPanel({
