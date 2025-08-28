@@ -25,13 +25,23 @@ interface EC2ApiResponse {
 }
 
 interface CostApiResponse {
-  totalMonthlyCost: number;
-  dailyBurnRate: number;
-  attributedCost: number;
-  unattributedCost: number;
-  costTrend: CostTrendPoint[];
-  anomalies: { date: string; expectedCost: number; actualCost: number }[];
-  weeklyEfficiencyScore: number;
+  costs: {
+    totalMonthlyCost: number;
+    totalMonthlyCostPreviousPeriod: number;
+    dailyBurnRate: number;
+    dailyBurnRatePreviousPeriod: number;
+    projectedMonthlyCost: number;
+    wasteScore: number;
+    wasteScorePreviousPeriod: number;
+    wasteAmount: number;
+    costByTeam: { team: string; cost: number }[];
+    costByEnvironment: { environment: string; cost: number }[];
+    costByRegion: { region: string; cost: number }[];
+    unattributedCost: number;
+    costTrend: CostTrendPoint[];
+    anomalies: { date: string; expectedCost: number; actualCost: number }[];
+    weeklyEfficiencyScore: number;
+  };
   source: "mock" | "aws" | "mock-fallback" | "error";
   timestamp: string;
 }
@@ -195,6 +205,25 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
     const today = new Date();
     const trendData: CostTrendPoint[] = [];
 
+    // Handle zero-cost scenario (real AWS data with no billable costs)
+    if (avgDailyCost === 0) {
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+
+        trendData.push({
+          date: date.toISOString(),
+          actualCost: 0,
+          baselineCost: 0,
+          pattern: "efficient",
+          annotation: "No billable costs",
+          efficiencyScore: 100,
+        });
+      }
+
+      return { costTrend: trendData, weeklyEfficiencyScore: 100 };
+    }
+
     for (let i = 6; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
@@ -204,7 +233,8 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
       const baselineCost = avgDailyCost * baseMultiplier;
       const actualCost = baselineCost * (0.9 + Math.random() * 0.2); // ±10% variation
 
-      const efficiency = Math.min(100, (baselineCost / actualCost) * 100);
+      // Prevent division by zero
+      const efficiency = actualCost > 0 ? Math.min(100, (baselineCost / actualCost) * 100) : 100;
       let pattern: CostTrendPoint["pattern"];
       let annotation: string;
 
@@ -552,7 +582,7 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
         />
 
         {/* Recent Anomalies - Historical incidents & spikes */}
-        <RecentAnomalies anomalies={costData?.anomalies || []} />
+        <RecentAnomalies anomalies={costData?.costs?.anomalies || []} />
       </div>
     </div>
   );

@@ -100,11 +100,11 @@ export default function EC2Table() {
     fetchInstances();
   }, [dataSource]);
 
-  // Transform instances for filtering (map tags.Team to team field)
+  // Transform instances for filtering (use existing team field or fallback to tags.Team)
   const instancesForFiltering =
     data?.instances?.map((instance) => ({
       ...instance,
-      team: instance.tags?.Team,
+      team: instance.team || instance.tags?.Team,
       region: instance.region,
     })) || [];
 

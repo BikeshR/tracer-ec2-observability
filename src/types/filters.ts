@@ -106,11 +106,8 @@ export const FILTER_OPTIONS = {
   teams: [
     "Chen Genomics Laboratory",
     "Rodriguez Bioinformatics Core",
-    "Watson Computational Biology Unit",
-    "Anderson Proteomics Research Center",
-    "Johnson Molecular Dynamics Lab",
+    "Johnson Molecular Dynamics Lab", 
     "Williams Data Science Institute",
-    "Brown Systems Biology Laboratory",
     "Davis Structural Biology Unit",
   ],
   regions: ["us-east-1", "us-west-2", "eu-west-1"],

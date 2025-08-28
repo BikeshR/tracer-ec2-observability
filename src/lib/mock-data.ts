@@ -46,12 +46,9 @@ const generateLargeDataset = () => {
 
   const teams = [
     "Chen Genomics Laboratory",
-    "Rodriguez Bioinformatics Core",
-    "Watson Computational Biology Unit",
-    "Anderson Proteomics Research Center",
+    "Rodriguez Bioinformatics Core", 
     "Johnson Molecular Dynamics Lab",
     "Williams Data Science Institute",
-    "Brown Systems Biology Laboratory",
     "Davis Structural Biology Unit",
   ];
 
@@ -424,6 +421,14 @@ const generateCostData = (): CostData => {
     unattributedCost: Math.round(totalMonthlyCost * 0.12 * 100) / 100, // 12% unattributed
     costTrend: generateResearchWorkflowPattern(dailyBurnRate),
     anomalies: [
+      // Critical severity spike - GPU cluster runaway job (yesterday)
+      {
+        date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split("T")[0],
+        expectedCost: Math.round(dailyBurnRate * 0.92 * 100) / 100,
+        actualCost: Math.round(dailyBurnRate * 2.1 * 100) / 100, // 128% spike
+      },
       // High severity spike - Large-scale genomics run (2 days ago)
       {
         date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000)

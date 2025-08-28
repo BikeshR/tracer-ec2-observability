@@ -31,13 +31,13 @@ if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
 // Helper function to get date range for cost queries
 function getDateRange() {
   const today = new Date();
-  // Use previous month's data to ensure availability (Cost Explorer has 24-48h delay)
-  const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-  const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+  // Use last 30 days to include recent data (Cost Explorer has 24-48h delay)
+  const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const twoDaysAgo = new Date(today.getTime() - 2 * 24 * 60 * 60 * 1000); // Account for delay
 
   return {
-    Start: lastMonth.toISOString().split("T")[0],
-    End: endOfLastMonth.toISOString().split("T")[0],
+    Start: thirtyDaysAgo.toISOString().split("T")[0],
+    End: twoDaysAgo.toISOString().split("T")[0],
   };
 }
 
@@ -63,8 +63,11 @@ async function fetchAWSCostData(): Promise<CostData> {
       ],
     });
 
+    console.log(`[Cost API] Querying Cost Explorer from ${dateRange.Start} to ${dateRange.End}`);
     const costResponse = await costExplorerClient.send(costAndUsageCommand);
 
+    console.log(`[Cost API] Cost Explorer returned ${costResponse.ResultsByTime?.length || 0} days of data`);
+    
     // Get cost by environment (using tags if available, otherwise mock structure)
     const costByEnvironment = mockCostData.costByEnvironment; // Fallback to mock structure
     const costByTeam = mockCostData.costByTeam; // Fallback to mock structure
@@ -73,10 +76,11 @@ async function fetchAWSCostData(): Promise<CostData> {
     let totalMonthlyCost = 0;
     const costTrend: CostTrendPoint[] = [];
 
-    if (costResponse.ResultsByTime) {
+    if (costResponse.ResultsByTime && costResponse.ResultsByTime.length > 0) {
       for (const result of costResponse.ResultsByTime) {
         const dailyCost = parseFloat(result.Total?.BlendedCost?.Amount || "0");
         totalMonthlyCost += dailyCost;
+        console.log(`[Cost API] Day ${result.TimePeriod?.Start}: $${dailyCost.toFixed(2)}`);
 
         if (result.TimePeriod?.Start) {
           // Convert AWS data to CostTrendPoint format
@@ -128,7 +132,7 @@ async function fetchAWSCostData(): Promise<CostData> {
       ],
       unattributedCost: 0,
       costTrend: costTrend.length > 0 ? costTrend : mockCostData.costTrend,
-      anomalies: mockCostData.anomalies, // Would require separate anomaly detection API
+      anomalies: [], // Real AWS anomaly detection would require AWS Cost Anomaly Detection service
       weeklyEfficiencyScore: 100 - wasteScore, // Invert waste score to get efficiency
     };
 

@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useDataSource } from "@/contexts/DataSourceContext";
 import { useFilteredData } from "@/hooks/useFilteredData";
 import type { EC2Instance } from "@/lib/mock-data";
 
@@ -70,6 +71,8 @@ export default function CostAttributionPanel({
   const [selectedBreakdown, setSelectedBreakdown] =
     useState<BreakdownType>("byTeam");
 
+  const { dataSource } = useDataSource();
+
   // Fetch EC2 instances data
   useEffect(() => {
     const loadInstanceData = async () => {
@@ -77,7 +80,9 @@ export default function CostAttributionPanel({
         setLoading(true);
         setError(null);
 
-        const response = await fetch("/api/instances");
+        const url = new URL("/api/instances", window.location.origin);
+        url.searchParams.set("dataSource", dataSource);
+        const response = await fetch(url);
 
         if (!response.ok) {
           throw new Error(`API Error: ${response.status}`);
@@ -100,14 +105,14 @@ export default function CostAttributionPanel({
     };
 
     loadInstanceData();
-  }, []);
+  }, [dataSource]);
 
-  // Transform instances for filtering (map tags.Team to team field)
+  // Transform instances for filtering (use existing team field or fallback to tags.Team)
   const instancesForFiltering = useMemo(
     () =>
       data?.instances?.map((instance) => ({
         ...instance,
-        team: instance.tags?.Team,
+        team: instance.team || instance.tags?.Team,
         region: instance.region,
       })) || [],
     [data?.instances],
@@ -280,7 +285,7 @@ export default function CostAttributionPanel({
     return `hsl(${Math.abs(hash) % 360}, 70%, 50%)`;
   };
 
-  // Prepare data for pie chart (all data, not sliced to show unattributed)
+  // Prepare data for pie chart - simpler now with fewer teams
   const pieChartData = getBreakdownData.map((item) => ({
     ...item,
     name: item.category,
@@ -542,8 +547,8 @@ export default function CostAttributionPanel({
         <CardContent className="flex-1">
           {viewMode === "table" ? (
             <div className="max-h-80 overflow-y-auto scrollbar-thin scrollbar-thumb-muted scrollbar-track-transparent">
-              {breakdownData.length > 0 ? (
-                breakdownData.map((item) => (
+              {getBreakdownData.length > 0 ? (
+                getBreakdownData.map((item) => (
                   <div
                     key={item.category}
                     className="flex items-center justify-between p-4 bg-secondary rounded-lg hover:bg-accent/30 transition-colors mb-3 last:mb-0"
@@ -583,21 +588,19 @@ export default function CostAttributionPanel({
               )}
             </div>
           ) : (
-            <div className="h-80 space-y-6">
-              {/* Pie Chart */}
-              <div className="h-80">
-                {pieChartData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={pieChartData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={120}
-                        paddingAngle={2}
-                        dataKey="value"
-                      >
+            <div className="h-80">
+              {pieChartData.length > 0 && pieChartData.some(item => item.value > 0) ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart margin={{ top: 10, right: 10, bottom: 40, left: 10 }}>
+                    <Pie
+                      data={pieChartData}
+                      cx="50%"
+                      cy="45%"
+                      innerRadius="25%"
+                      outerRadius="70%"
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
                         {pieChartData.map((entry) => (
                           <Cell key={entry.category} fill={entry.color} />
                         ))}
@@ -619,26 +622,29 @@ export default function CostAttributionPanel({
                         }}
                       />
                       <Legend
-                        formatter={(value, entry) => (
-                          <span className="text-sm text-foreground">
-                            {value} (
-                            {Number(
-                              (
-                                ((entry.payload?.value || 0) /
-                                  pieChartData.reduce(
-                                    (sum, item) => sum + item.value,
-                                    0,
-                                  )) *
-                                100
-                              ).toFixed(1),
-                            )}
-                            %)
-                          </span>
-                        )}
-                        wrapperStyle={{
-                          fontSize: "12px",
-                          paddingTop: "16px",
+                        verticalAlign="bottom"
+                        height={36}
+                        formatter={(value, entry) => {
+                          const totalValue = pieChartData.reduce(
+                            (sum, item) => sum + item.value,
+                            0,
+                          );
+                          const percentage = totalValue > 0 
+                            ? ((entry.payload?.value || 0) / totalValue) * 100
+                            : 0;
+                          
+                          return (
+                            <span className="text-xs text-foreground">
+                              {value.length > 20 ? value.substring(0, 20) + '...' : value} ({Number(percentage.toFixed(1))}%)
+                            </span>
+                          );
                         }}
+                        wrapperStyle={{
+                          fontSize: "10px",
+                          lineHeight: "1.2",
+                          paddingTop: "8px",
+                        }}
+                        iconType="circle"
                       />
                     </PieChart>
                   </ResponsiveContainer>
@@ -650,7 +656,6 @@ export default function CostAttributionPanel({
                   </div>
                 )}
               </div>
-            </div>
           )}
         </CardContent>
       </Card>
