@@ -436,7 +436,7 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {100 - costMetrics.wasteScore}%
+              {(100 - costMetrics.wasteScore).toFixed(1)}%
             </div>
             <div className="flex items-center text-xs text-muted-foreground mb-2">
               {getEfficiencyTrend(
