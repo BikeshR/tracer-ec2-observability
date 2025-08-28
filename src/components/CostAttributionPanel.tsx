@@ -67,7 +67,7 @@ export default function CostAttributionPanel({
   const [data, setData] = useState<EC2ApiResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [_error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<ViewMode>("table");
+  const [viewMode, setViewMode] = useState<ViewMode>("chart");
   const [selectedBreakdown, setSelectedBreakdown] =
     useState<BreakdownType>("byTeam");
 
