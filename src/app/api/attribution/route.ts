@@ -187,6 +187,7 @@ async function fetchAWSAttributionData(): Promise<AttributionData> {
         byEnvironment: convertToBreakdown(attribution.byEnvironment),
         byInstanceType: [], // Would require additional EC2 API calls
         byRegion: convertToBreakdown(attribution.byRegion),
+        byJob: [], // Would require job ID information from instances
       },
       timeRange: dateRange,
       lastUpdated: new Date().toISOString(),

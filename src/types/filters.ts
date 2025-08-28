@@ -106,7 +106,7 @@ export const FILTER_OPTIONS = {
   teams: [
     "Chen Genomics Laboratory",
     "Rodriguez Bioinformatics Core",
-    "Johnson Molecular Dynamics Lab", 
+    "Johnson Molecular Dynamics Lab",
     "Williams Data Science Institute",
     "Davis Structural Biology Unit",
   ],

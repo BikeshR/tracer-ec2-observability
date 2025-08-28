@@ -354,8 +354,6 @@ export default function CostAttributionPanel({
     );
   }
 
-  const breakdownData = getBreakdownData;
-
   return (
     <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 ${className}`}>
       {/* Left: Attribution Health & Alerts */}
@@ -589,9 +587,12 @@ export default function CostAttributionPanel({
             </div>
           ) : (
             <div className="h-80">
-              {pieChartData.length > 0 && pieChartData.some(item => item.value > 0) ? (
+              {pieChartData.length > 0 &&
+              pieChartData.some((item) => item.value > 0) ? (
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart margin={{ top: 10, right: 10, bottom: 40, left: 10 }}>
+                  <PieChart
+                    margin={{ top: 10, right: 10, bottom: 40, left: 10 }}
+                  >
                     <Pie
                       data={pieChartData}
                       cx="50%"
@@ -601,61 +602,65 @@ export default function CostAttributionPanel({
                       paddingAngle={2}
                       dataKey="value"
                     >
-                        {pieChartData.map((entry) => (
-                          <Cell key={entry.category} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        animationDuration={0}
-                        content={({ active, payload, label }) => {
-                          if (active && payload && payload.length) {
-                            return (
-                              <div className="bg-popover text-popover-foreground border border-border rounded-md px-3 py-2 shadow-md animate-in fade-in-0 duration-150">
-                                <p className="font-medium">{label}</p>
-                                <p className="text-sm">
-                                  {formatCurrency(payload[0].value as number)}
-                                </p>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Legend
-                        verticalAlign="bottom"
-                        height={36}
-                        formatter={(value, entry) => {
-                          const totalValue = pieChartData.reduce(
-                            (sum, item) => sum + item.value,
-                            0,
+                      {pieChartData.map((entry) => (
+                        <Cell key={entry.category} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      animationDuration={0}
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="bg-popover text-popover-foreground border border-border rounded-md px-3 py-2 shadow-md animate-in fade-in-0 duration-150">
+                              <p className="font-medium">{label}</p>
+                              <p className="text-sm">
+                                {formatCurrency(payload[0].value as number)}
+                              </p>
+                            </div>
                           );
-                          const percentage = totalValue > 0 
+                        }
+                        return null;
+                      }}
+                    />
+                    <Legend
+                      verticalAlign="bottom"
+                      height={36}
+                      formatter={(value, entry) => {
+                        const totalValue = pieChartData.reduce(
+                          (sum, item) => sum + item.value,
+                          0,
+                        );
+                        const percentage =
+                          totalValue > 0
                             ? ((entry.payload?.value || 0) / totalValue) * 100
                             : 0;
-                          
-                          return (
-                            <span className="text-xs text-foreground">
-                              {value.length > 20 ? value.substring(0, 20) + '...' : value} ({Number(percentage.toFixed(1))}%)
-                            </span>
-                          );
-                        }}
-                        wrapperStyle={{
-                          fontSize: "10px",
-                          lineHeight: "1.2",
-                          paddingTop: "8px",
-                        }}
-                        iconType="circle"
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex items-center justify-center h-full text-center text-muted-foreground">
-                    <p className="text-sm">
-                      No attribution data available for this breakdown
-                    </p>
-                  </div>
-                )}
-              </div>
+
+                        return (
+                          <span className="text-xs text-foreground">
+                            {value.length > 20
+                              ? `${value.substring(0, 20)}...`
+                              : value}{" "}
+                            ({Number(percentage.toFixed(1))}%)
+                          </span>
+                        );
+                      }}
+                      wrapperStyle={{
+                        fontSize: "10px",
+                        lineHeight: "1.2",
+                        paddingTop: "8px",
+                      }}
+                      iconType="circle"
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-full text-center text-muted-foreground">
+                  <p className="text-sm">
+                    No attribution data available for this breakdown
+                  </p>
+                </div>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>

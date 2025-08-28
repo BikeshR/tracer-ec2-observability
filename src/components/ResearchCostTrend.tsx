@@ -31,12 +31,12 @@ export default function ResearchCostTrend({
       // Draw a flat line at the bottom for zero costs
       const y = padding + height;
       const pathData = points
-        .map((cost, index) => {
+        .map((_cost, index) => {
           const x = padding + (index / (points.length - 1)) * width;
           return `${index === 0 ? "M" : "L"} ${x} ${y}`;
         })
         .join(" ");
-      
+
       const lastX = padding + width;
       const firstX = padding;
       const bottomY = padding + height;
@@ -197,11 +197,12 @@ export default function ResearchCostTrend({
                 const width = chartWidth - padding * 2;
                 const height = chartHeight - padding * 2;
                 const x = padding + (index / (data.length - 1)) * width;
-                
+
                 // Handle zero-cost scenario to prevent NaN
-                const y = maxCost === 0 
-                  ? padding + height  // Place at bottom for zero costs
-                  : padding + height - (point.actualCost / maxCost) * height;
+                const y =
+                  maxCost === 0
+                    ? padding + height // Place at bottom for zero costs
+                    : padding + height - (point.actualCost / maxCost) * height;
 
                 return (
                   <g key={point.date}>

@@ -234,7 +234,8 @@ export default function CostOverview({ className = "" }: CostOverviewProps) {
       const actualCost = baselineCost * (0.9 + Math.random() * 0.2); // ±10% variation
 
       // Prevent division by zero
-      const efficiency = actualCost > 0 ? Math.min(100, (baselineCost / actualCost) * 100) : 100;
+      const efficiency =
+        actualCost > 0 ? Math.min(100, (baselineCost / actualCost) * 100) : 100;
       let pattern: CostTrendPoint["pattern"];
       let annotation: string;
 

@@ -63,11 +63,15 @@ async function fetchAWSCostData(): Promise<CostData> {
       ],
     });
 
-    console.log(`[Cost API] Querying Cost Explorer from ${dateRange.Start} to ${dateRange.End}`);
+    console.log(
+      `[Cost API] Querying Cost Explorer from ${dateRange.Start} to ${dateRange.End}`,
+    );
     const costResponse = await costExplorerClient.send(costAndUsageCommand);
 
-    console.log(`[Cost API] Cost Explorer returned ${costResponse.ResultsByTime?.length || 0} days of data`);
-    
+    console.log(
+      `[Cost API] Cost Explorer returned ${costResponse.ResultsByTime?.length || 0} days of data`,
+    );
+
     // Get cost by environment (using tags if available, otherwise mock structure)
     const costByEnvironment = mockCostData.costByEnvironment; // Fallback to mock structure
     const costByTeam = mockCostData.costByTeam; // Fallback to mock structure
@@ -80,7 +84,9 @@ async function fetchAWSCostData(): Promise<CostData> {
       for (const result of costResponse.ResultsByTime) {
         const dailyCost = parseFloat(result.Total?.BlendedCost?.Amount || "0");
         totalMonthlyCost += dailyCost;
-        console.log(`[Cost API] Day ${result.TimePeriod?.Start}: $${dailyCost.toFixed(2)}`);
+        console.log(
+          `[Cost API] Day ${result.TimePeriod?.Start}: $${dailyCost.toFixed(2)}`,
+        );
 
         if (result.TimePeriod?.Start) {
           // Convert AWS data to CostTrendPoint format
